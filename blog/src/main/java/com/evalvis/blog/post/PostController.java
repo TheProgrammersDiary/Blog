@@ -7,17 +7,17 @@ import protobufs.PostRequest;
 
 @RestController
 @RequestMapping("posts")
-public final class PostController {
+final class PostController {
 
     private final PostRepository postRepository;
 
     @Autowired
-    public PostController(PostRepository postRepository) {
+    PostController(PostRepository postRepository) {
         this.postRepository = postRepository;
     }
 
     @PostMapping(value = "/create")
-    public ResponseEntity<PostRepository.PostEntry> create(@RequestBody PostRequest postRequest)
+    ResponseEntity<PostRepository.PostEntry> create(@RequestBody PostRequest postRequest)
     {
         return ResponseEntity.ok(
                 new Post(

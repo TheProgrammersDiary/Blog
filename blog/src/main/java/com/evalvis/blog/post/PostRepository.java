@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.data.repository.CrudRepository;
 
 @Repository
-public interface PostRepository extends CrudRepository<PostRepository.PostEntry, Long> {
+public interface PostRepository extends CrudRepository<PostRepository.PostEntry, String> {
 
     @Entity(name = "post")
     class PostEntry {
@@ -28,6 +28,10 @@ public interface PostRepository extends CrudRepository<PostRepository.PostEntry,
         }
 
         public PostEntry() {}
+
+        public PostEntry(String id) {
+            this.id = id;
+        }
 
         public String getId() {
             return id;
