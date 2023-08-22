@@ -12,7 +12,11 @@ public final class Comment {
         this.postId = postId;
     }
 
-    public CommentRepository.CommentEntry create(CommentRepository commentRepository) {
-        return commentRepository.save(new CommentRepository.CommentEntry(author, content, postId));
+    public CommentRepository.CommentEntry create(
+            CommentRepository<CommentRepository.CommentEntry> commentRepository
+    ) {
+        return commentRepository.save(
+                new SpringCommentRepository.CommentEntry(author, content, postId)
+        );
     }
 }

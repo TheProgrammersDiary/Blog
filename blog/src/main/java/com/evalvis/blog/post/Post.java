@@ -12,7 +12,11 @@ public final class Post {
         this.content = content;
     }
 
-    public PostRepository.PostEntry create(PostRepository postRepository) {
-        return postRepository.save(new PostRepository.PostEntry(author, title, content));
+    public PostRepository.PostEntry create(
+            PostRepository<PostRepository.PostEntry> postRepository
+    ) {
+        return postRepository.save(
+                new SpringPostRepository.PostEntry(author, title, content)
+        );
     }
 }

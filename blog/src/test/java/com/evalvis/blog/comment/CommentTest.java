@@ -19,7 +19,7 @@ public class CommentTest {
 
     private Expect expect;
     @Mock
-    private CommentRepository commentRepository;
+    private CommentRepository<CommentRepository.CommentEntry> commentRepository;
 
     @InjectMocks
     private CommentController commentController;

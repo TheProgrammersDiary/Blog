@@ -9,11 +9,11 @@ import protobufs.PostRequest;
 @RequestMapping("posts")
 final class PostController {
 
-    private final PostRepository postRepository;
+    private final PostRepository springPostRepository;
 
     @Autowired
-    PostController(PostRepository postRepository) {
-        this.postRepository = postRepository;
+    PostController(PostRepository springPostRepository) {
+        this.springPostRepository = springPostRepository;
     }
 
     @PostMapping(value = "/create")
@@ -22,7 +22,7 @@ final class PostController {
         return ResponseEntity.ok(
                 new Post(
                 postRequest.getAuthor(), postRequest.getTitle(), postRequest.getContent()
-                ).create(postRepository)
+                ).create(springPostRepository)
         );
     }
 }

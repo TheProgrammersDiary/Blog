@@ -5,6 +5,7 @@ import au.com.origin.snapshots.annotations.SnapshotName;
 import au.com.origin.snapshots.junit5.SnapshotExtension;
 
 import com.evalvis.blog.comment.CommentRepository;
+import com.evalvis.blog.comment.SpringCommentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -43,7 +44,7 @@ public class PostTest {
                 .build();
         PostRepository.PostEntry postFromResponse = restTemplate.postForObject(
                 "http://localhost:" + port + "/posts/create",
-                postRequest, PostRepository.PostEntry.class
+                postRequest, SpringPostRepository.PostEntry.class
         );
         int commentCount = 2;
         for(int i = 0; i < commentCount; i++) {
@@ -55,13 +56,13 @@ public class PostTest {
                             .setContent("content" + i)
                             .setPostId(postFromResponse.getId())
                             .build(),
-                    CommentRepository.CommentEntry.class
+                    SpringCommentRepository.CommentEntry.class
             );
         }
 
         CommentRepository.CommentEntry[] commentsFromResponse = restTemplate.getForObject(
                 "http://localhost:" + port + "/comments/list-comments/" + postFromResponse.getId(),
-                CommentRepository.CommentEntry[].class
+                SpringCommentRepository.CommentEntry[].class
         );
 
         expect.toMatchSnapshot(jsonWithMaskedId(commentsFromResponse));
