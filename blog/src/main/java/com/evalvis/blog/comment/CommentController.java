@@ -12,11 +12,11 @@ import java.util.List;
 @RequestMapping("comments")
 final class CommentController {
 
-    private final CommentRepository<FileCommentRepository.CommentEntry> commentRepository;
+    private final CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository;
 
     @Autowired
     CommentController(
-            @Qualifier("fileCommentRepository") CommentRepository<FileCommentRepository.CommentEntry> commentRepository
+            @Qualifier("mongoDbCommentRepository") CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository
     ) {
         this.commentRepository = commentRepository;
     }
@@ -28,7 +28,7 @@ final class CommentController {
     {
         return ResponseEntity.ok(
                 commentRepository.save(
-                        new FileCommentRepository.CommentEntry(
+                        new MongoDbCommentRepository.CommentEntry(
                                 commentRequest.getAuthor(), commentRequest.getContent(),
                                 commentRequest.getPostId()
                         )
