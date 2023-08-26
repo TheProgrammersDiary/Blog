@@ -1,6 +1,7 @@
 package com.evalvis.blog.comment;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import protobufs.CommentRequest;
@@ -11,10 +12,12 @@ import java.util.List;
 @RequestMapping("comments")
 final class CommentController {
 
-    private final CommentRepository commentRepository;
+    private final CommentRepository<FileCommentRepository.CommentEntry> commentRepository;
 
     @Autowired
-    CommentController(CommentRepository commentRepository) {
+    CommentController(
+            @Qualifier("fileCommentRepository") CommentRepository<FileCommentRepository.CommentEntry> commentRepository
+    ) {
         this.commentRepository = commentRepository;
     }
 
@@ -24,10 +27,12 @@ final class CommentController {
     )
     {
         return ResponseEntity.ok(
-                new Comment(
-                        commentRequest.getAuthor(), commentRequest.getContent(),
-                        commentRequest.getPostId()
-                ).create(commentRepository)
+                commentRepository.save(
+                        new FileCommentRepository.CommentEntry(
+                                commentRequest.getAuthor(), commentRequest.getContent(),
+                                commentRequest.getPostId()
+                        )
+                )
         );
     }
 

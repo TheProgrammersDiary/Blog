@@ -8,8 +8,9 @@ public interface CommentRepository<T extends CommentRepository.CommentEntry> ext
 
     List<CommentRepository.CommentEntry> findCommentEntriesByPostEntryId(String postId);
 
-    interface CommentEntry extends Entry{
+    interface CommentEntry extends Entry {
         String getAuthor();
         String getContent();
+        String getPostEntryId();
     }
 }

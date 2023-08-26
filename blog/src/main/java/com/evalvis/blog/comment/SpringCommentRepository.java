@@ -1,12 +1,12 @@
 package com.evalvis.blog.comment;
 
-import com.evalvis.blog.post.SpringPostRepository;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
+import org.springframework.context.annotation.Primary;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
+@Repository("springCommentRepository")
+@Primary
 public interface SpringCommentRepository extends CommentRepository<SpringCommentRepository.CommentEntry>,
         CrudRepository<SpringCommentRepository.CommentEntry, String> {
 
@@ -21,28 +21,35 @@ public interface SpringCommentRepository extends CommentRepository<SpringComment
         private String author;
         @Column(nullable = false)
         private String content;
-        @ManyToOne(fetch = FetchType.LAZY)
-        @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-        private SpringPostRepository.PostEntry postEntry;
+        @Column(nullable = false)
+        private String postEntryId;
 
-        CommentEntry(String author, String content, String postId) {
+        CommentEntry(String author, String content, String postEntryId) {
             this.author = author;
             this.content = content;
-            postEntry = new SpringPostRepository.PostEntry(postId);
+            this.postEntryId = postEntryId;
         }
 
         public CommentEntry() {}
 
+        @Override
         public String getId() {
             return id;
         }
 
+        @Override
         public String getAuthor() {
             return author;
         }
 
+        @Override
         public String getContent() {
             return content;
+        }
+
+        @Override
+        public String getPostEntryId() {
+            return postEntryId;
         }
     }
 }

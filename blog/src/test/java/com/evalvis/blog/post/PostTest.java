@@ -4,8 +4,9 @@ import au.com.origin.snapshots.Expect;
 import au.com.origin.snapshots.annotations.SnapshotName;
 import au.com.origin.snapshots.junit5.SnapshotExtension;
 
+import com.evalvis.blog.Repository;
 import com.evalvis.blog.comment.CommentRepository;
-import com.evalvis.blog.comment.SpringCommentRepository;
+import com.evalvis.blog.comment.FileCommentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -20,6 +21,11 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 
 import protobufs.CommentRequest;
 import protobufs.PostRequest;
+
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
+import static shadow.org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith({SnapshotExtension.class})
@@ -47,8 +53,10 @@ public class PostTest {
                 postRequest, SpringPostRepository.PostEntry.class
         );
         int commentCount = 2;
+        String[] commentIds = new String[commentCount];
+
         for(int i = 0; i < commentCount; i++) {
-            restTemplate.postForObject(
+            CommentRepository.CommentEntry createdComment = restTemplate.postForObject(
                     "http://localhost:" + port + "/comments/create",
                     CommentRequest
                             .newBuilder()
@@ -56,21 +64,33 @@ public class PostTest {
                             .setContent("content" + i)
                             .setPostId(postFromResponse.getId())
                             .build(),
-                    SpringCommentRepository.CommentEntry.class
+                    FileCommentRepository.CommentEntry.class
             );
+            commentIds[i] = createdComment.getId();
         }
-
-        CommentRepository.CommentEntry[] commentsFromResponse = restTemplate.getForObject(
+        CommentRepository.CommentEntry[] commentsByPost = restTemplate.getForObject(
                 "http://localhost:" + port + "/comments/list-comments/" + postFromResponse.getId(),
-                SpringCommentRepository.CommentEntry[].class
+                FileCommentRepository.CommentEntry[].class
         );
 
-        expect.toMatchSnapshot(jsonWithMaskedId(commentsFromResponse));
+        assertThat(commentsByPost.length).isEqualTo(2);
+        assertThat(
+                Arrays.stream(commentsByPost).map(Repository.Entry::getId).toArray()
+        ).isEqualTo(commentIds);
+        expect.toMatchSnapshot(
+                jsonWithMaskedProperties(commentsByPost, "id", "postEntryId")
+        );
     }
 
-    private <T> String jsonWithMaskedId(T[] object) throws JsonProcessingException {
-        ArrayNode node = new ObjectMapper().valueToTree(object);
-        node.forEach(element -> ((ObjectNode) element).put("id", "#hidden#"));
+    private <T> String jsonWithMaskedProperties(
+            T[] objects, String... properties
+    ) throws JsonProcessingException {
+        ArrayNode node = new ObjectMapper().valueToTree(objects);
+        node.forEach(element ->
+            Arrays
+                    .stream(properties)
+                    .forEach(property -> ((ObjectNode) element).put(property, "#hidden#"))
+        );
         return new ObjectMapper().writeValueAsString(node);
     }
 }
