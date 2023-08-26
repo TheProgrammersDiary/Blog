@@ -1,8 +1,6 @@
 package com.evalvis.blog.comment;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -10,8 +8,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository("mongoDbCommentRepository")
-public interface MongoDbCommentRepository extends
-        CommentRepository<MongoDbCommentRepository.CommentEntry>,
+public interface MongoDbCommentRepository extends CommentRepository,
         MongoRepository<MongoDbCommentRepository.CommentEntry, String> {
 
     @Document("comment")

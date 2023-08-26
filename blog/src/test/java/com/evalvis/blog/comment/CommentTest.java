@@ -22,7 +22,7 @@ public class CommentTest {
 
     private Expect expect;
     @Mock
-    private CommentRepository<CommentRepository.CommentEntry> commentRepository;
+    private CommentRepository commentRepository;
 
     @InjectMocks
     private CommentController commentController;
@@ -48,11 +48,11 @@ public class CommentTest {
         expect.toMatchSnapshot(jsonWithMaskedProperties(commentFromResponse, "id"));
     }
 
-    private <T> String jsonWithMaskedProperties(
+    private <T> ObjectNode jsonWithMaskedProperties(
             T object, String... properties
     ) throws JsonProcessingException {
         ObjectNode node = new ObjectMapper().valueToTree(object);
         Arrays.stream(properties).forEach(property -> node.put(property, "#hidden#"));
-        return new ObjectMapper().writeValueAsString(node);
+        return node;
     }
 }

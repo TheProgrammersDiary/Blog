@@ -1,5 +1,6 @@
 package com.evalvis.blog.comment;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
 import org.springframework.context.annotation.Primary;
 import org.springframework.data.repository.CrudRepository;
@@ -7,10 +8,11 @@ import org.springframework.stereotype.Repository;
 
 @Repository("springCommentRepository")
 @Primary
-public interface SpringCommentRepository extends CommentRepository<SpringCommentRepository.CommentEntry>,
+public interface SpringCommentRepository extends CommentRepository,
         CrudRepository<SpringCommentRepository.CommentEntry, String> {
 
     @Entity(name = "comment")
+    @JsonPropertyOrder(alphabetic=true)
     class CommentEntry implements CommentRepository.CommentEntry {
 
         @Id

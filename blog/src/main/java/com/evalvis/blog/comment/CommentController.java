@@ -12,19 +12,15 @@ import java.util.List;
 @RequestMapping("comments")
 final class CommentController {
 
-    private final CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository;
+    private final CommentRepository commentRepository;
 
     @Autowired
-    CommentController(
-            @Qualifier("mongoDbCommentRepository") CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository
-    ) {
+    CommentController(@Qualifier("mongoDbCommentRepository") CommentRepository commentRepository) {
         this.commentRepository = commentRepository;
     }
 
     @PostMapping(value = "/create")
-    ResponseEntity<CommentRepository.CommentEntry> create(
-            @RequestBody CommentRequest commentRequest
-    )
+    ResponseEntity<CommentRepository.CommentEntry> create(@RequestBody CommentRequest commentRequest)
     {
         return ResponseEntity.ok(
                 commentRepository.save(

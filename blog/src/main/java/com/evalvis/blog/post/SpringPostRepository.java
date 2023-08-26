@@ -1,16 +1,16 @@
 package com.evalvis.blog.post;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.persistence.*;
-import org.springframework.stereotype.Repository;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.stereotype.Repository;
 
 @Repository
-public interface SpringPostRepository extends PostRepository<SpringPostRepository.PostEntry>,
+public interface SpringPostRepository extends PostRepository,
         CrudRepository<SpringPostRepository.PostEntry, String> {
 
-
-
     @Entity(name = "post")
+    @JsonPropertyOrder(alphabetic=true)
     class PostEntry implements PostRepository.PostEntry {
 
         @Id
@@ -31,10 +31,6 @@ public interface SpringPostRepository extends PostRepository<SpringPostRepositor
         }
 
         public PostEntry() {}
-
-        public PostEntry(String id) {
-            this.id = id;
-        }
 
         public String getId() {
             return id;

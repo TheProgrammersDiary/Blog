@@ -6,7 +6,7 @@ import au.com.origin.snapshots.junit5.SnapshotExtension;
 
 import com.evalvis.blog.Repository;
 import com.evalvis.blog.comment.CommentRepository;
-import com.evalvis.blog.comment.FileCommentRepository;
+import com.evalvis.blog.comment.MongoDbCommentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -23,7 +23,6 @@ import protobufs.CommentRequest;
 import protobufs.PostRequest;
 
 import java.util.Arrays;
-import java.util.stream.Collectors;
 
 import static shadow.org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
@@ -64,13 +63,13 @@ public class PostTest {
                             .setContent("content" + i)
                             .setPostId(postFromResponse.getId())
                             .build(),
-                    FileCommentRepository.CommentEntry.class
+                    MongoDbCommentRepository.CommentEntry.class
             );
             commentIds[i] = createdComment.getId();
         }
         CommentRepository.CommentEntry[] commentsByPost = restTemplate.getForObject(
                 "http://localhost:" + port + "/comments/list-comments/" + postFromResponse.getId(),
-                FileCommentRepository.CommentEntry[].class
+                MongoDbCommentRepository.CommentEntry[].class
         );
 
         assertThat(commentsByPost.length).isEqualTo(2);
@@ -82,7 +81,7 @@ public class PostTest {
         );
     }
 
-    private <T> String jsonWithMaskedProperties(
+    private <T> ArrayNode jsonWithMaskedProperties(
             T[] objects, String... properties
     ) throws JsonProcessingException {
         ArrayNode node = new ObjectMapper().valueToTree(objects);
@@ -91,6 +90,6 @@ public class PostTest {
                     .stream(properties)
                     .forEach(property -> ((ObjectNode) element).put(property, "#hidden#"))
         );
-        return new ObjectMapper().writeValueAsString(node);
+        return node;
     }
 }

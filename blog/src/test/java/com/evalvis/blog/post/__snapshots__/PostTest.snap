@@ -1,3 +1,16 @@
 createsPostWithComments=[
-[{"author":"author0","content":"content0","postEntryId":"#hidden#","id":"#hidden#"},{"author":"author1","content":"content1","postEntryId":"#hidden#","id":"#hidden#"}]
+  [
+    {
+      "author": "author0",
+      "content": "content0",
+      "id": "#hidden#",
+      "postEntryId": "#hidden#"
+    },
+    {
+      "author": "author1",
+      "content": "content1",
+      "id": "#hidden#",
+      "postEntryId": "#hidden#"
+    }
+  ]
 ]
