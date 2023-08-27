@@ -40,7 +40,7 @@ public class PostTest {
 
     @Test
     @SnapshotName("createsPostWithComments")
-    public void listsPostComments() throws JsonProcessingException {
+    public void listsPostComments() {
         PostRequest postRequest = PostRequest
                 .newBuilder()
                 .setAuthor("Human")
@@ -83,7 +83,7 @@ public class PostTest {
 
     private <T> ArrayNode jsonWithMaskedProperties(
             T[] objects, String... properties
-    ) throws JsonProcessingException {
+    ) {
         ArrayNode node = new ObjectMapper().valueToTree(objects);
         node.forEach(element ->
             Arrays
