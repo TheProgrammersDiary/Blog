@@ -15,7 +15,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Repository("fileCommentRepository")
-public class FileCommentRepository implements CommentRepository {
+public class FileCommentRepository implements CommentRepository<FileCommentRepository.CommentEntry> {
 
     private final Supplier<File> commentRepo;
 
@@ -53,7 +53,7 @@ public class FileCommentRepository implements CommentRepository {
     }
 
     @Override
-    public CommentRepository.CommentEntry save(CommentRepository.CommentEntry entry) {
+    public CommentRepository.CommentEntry save(CommentEntry entry) {
         try {
             List<CommentEntry> comments = new ObjectMapper()
                     .readValue(commentRepo.get(), new TypeReference<>() {});

@@ -12,10 +12,10 @@ import java.util.List;
 @RequestMapping("comments")
 final class CommentController {
 
-    private final CommentRepository commentRepository;
+    private final CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository;
 
     @Autowired
-    CommentController(@Qualifier("mongoDbCommentRepository") CommentRepository commentRepository) {
+    CommentController(@Qualifier("mongoDbCommentRepository") CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository) {
         this.commentRepository = commentRepository;
     }
 

@@ -8,7 +8,7 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
 @Repository("mongoDbCommentRepository")
-public interface MongoDbCommentRepository extends CommentRepository,
+public interface MongoDbCommentRepository extends CommentRepository<MongoDbCommentRepository.CommentEntry>,
         MongoRepository<MongoDbCommentRepository.CommentEntry, String> {
 
     @Document("comment")

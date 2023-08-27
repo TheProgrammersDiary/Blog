@@ -8,7 +8,8 @@ import org.springframework.stereotype.Repository;
 
 @Repository("springCommentRepository")
 @Primary
-public interface SpringCommentRepository extends CommentRepository,
+public interface SpringCommentRepository
+        extends CommentRepository<SpringCommentRepository.CommentEntry>,
         CrudRepository<SpringCommentRepository.CommentEntry, String> {
 
     @Entity(name = "comment")

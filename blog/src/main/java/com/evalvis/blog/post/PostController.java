@@ -10,10 +10,10 @@ import protobufs.PostRequest;
 @RequestMapping("posts")
 final class PostController {
 
-    private final PostRepository postRepository;
+    private final PostRepository<SpringPostRepository.PostEntry> postRepository;
 
     @Autowired
-    PostController(PostRepository postRepository) {
+    PostController(PostRepository<SpringPostRepository.PostEntry> postRepository) {
         this.postRepository = postRepository;
     }
 
