@@ -23,6 +23,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import protobufs.CommentRequest;
 import protobufs.PostRequest;
@@ -48,21 +49,27 @@ public class PostTest {
             "postgres:15.4"
     );
 
+    private static final MongoDBContainer mongoDB = new MongoDBContainer("mongo:7.0");
+
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
+
+        registry.add("spring.data.mongodb.uri", mongoDB::getConnectionString);
     }
 
     @BeforeAll
     static void beforeAll() {
         postgres.start();
+        mongoDB.start();
     }
 
     @AfterAll
     static void afterAll() {
         postgres.stop();
+        mongoDB.stop();
     }
 
     @Test
