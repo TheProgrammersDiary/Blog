@@ -7,10 +7,11 @@ import au.com.origin.snapshots.junit5.SnapshotExtension;
 import com.evalvis.blog.Repository;
 import com.evalvis.blog.comment.CommentRepository;
 import com.evalvis.blog.comment.MongoDbCommentRepository;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
@@ -19,6 +20,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
 import protobufs.CommentRequest;
 import protobufs.PostRequest;
 
@@ -28,6 +33,7 @@ import static shadow.org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ExtendWith({SnapshotExtension.class})
+@ActiveProfiles("ittest")
 public class PostTest {
 
     private Expect expect;
@@ -37,6 +43,32 @@ public class PostTest {
 
     @Autowired
     private TestRestTemplate restTemplate;
+
+    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(
+            "postgres:15.4"
+    );
+
+    @DynamicPropertySource
+    static void configureProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
+    }
+
+    @BeforeAll
+    static void beforeAll() {
+        postgres.start();
+    }
+
+    @AfterAll
+    static void afterAll() {
+        postgres.stop();
+    }
+
+    @Test
+    public void check() {
+
+    }
 
     @Test
     @SnapshotName("createsPostWithComments")
