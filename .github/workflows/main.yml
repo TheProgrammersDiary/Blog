@@ -21,7 +21,7 @@ jobs:
       run: mvn -B -f blog/pom.xml test
     - name: Package
       run: mvn -B -f blog/pom.xml package
-    - run: mkdir artifact && cp target/*.jar artifact
+    - run: mkdir artifact && cp blog/target/*.jar artifact
     - uses: actions/upload-artifact@v2
       with:
        name: Create artifact
