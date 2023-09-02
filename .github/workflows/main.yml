@@ -14,5 +14,5 @@ jobs:
       with:
         java-version: 17
         distribution: temurin
-    - name: Build project with Maven
-      run: mvn -B clean package
+    - name: Package project
+      run: mvn -B -f blog/pom.xml clean package
