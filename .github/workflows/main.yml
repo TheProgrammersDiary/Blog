@@ -49,7 +49,7 @@ jobs:
         tags: localstradedocker/blog:blog_latest
     -
       name: run E2E tests
-      run: |
+      run: >
       curl
       -X POST https://api.github.com/repos/EvalVis/blogDocker/dispatches
       -u ${{secrets.ACTIONS_KEY}}
