@@ -50,9 +50,9 @@ jobs:
     -
       name: run E2E tests
       run: >
-      curl
-      -X POST https://api.github.com/repos/EvalVis/blogDocker/dispatches
-      -u ${{secrets.ACTIONS_KEY}}
-      -H "Accept: application/vnd.github.everest-preview+json"
-      -H "Content-Type: application/json"
-      --data '{"event_type": "trigger_tests"}'
+        curl
+        -X POST https://api.github.com/repos/EvalVis/blogDocker/dispatches
+        -u ${{secrets.ACTIONS_KEY}}
+        -H "Accept: application/vnd.github.everest-preview+json"
+        -H "Content-Type: application/json"
+        --data '{"event_type": "trigger_tests"}'
