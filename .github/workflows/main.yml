@@ -55,4 +55,4 @@ jobs:
         -u ${{secrets.GITHUBTOKEN}}
         -H "Accept: application/vnd.github.everest-preview+json"
         -H "Content-Type: application/json"
-        --data '{"event_type": "trigger_tests"}'
+        --data '{"event_type": "trigger_tests_monolith"}'
