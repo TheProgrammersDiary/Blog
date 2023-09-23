@@ -38,7 +38,7 @@ public class CommentTest {
         CommentRepository.CommentEntry commentFromResponse = commentController.create(
                 comment
         ).getBody();
-
+ 
         Mockito.verify(commentRepository).save(Mockito.any(CommentRepository.CommentEntry.class));
         expect.toMatchSnapshot(jsonWithMaskedProperties(commentFromResponse, "id"));
     }
