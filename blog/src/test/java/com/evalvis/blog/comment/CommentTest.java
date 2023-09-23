@@ -11,7 +11,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
-import protobufs.CommentRequest;
 
 import java.util.Arrays;
 
@@ -21,7 +20,7 @@ public class CommentTest {
 
     private Expect expect;
     @Mock
-    private CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository;
+    private CommentRepository commentRepository;
 
     @InjectMocks
     private CommentController commentController;
@@ -30,22 +29,17 @@ public class CommentTest {
     @SnapshotName("createsComment")
     public void createsComment() {
         Mockito.when(
-                commentRepository.save(Mockito.any(MongoDbCommentRepository.CommentEntry.class))
+                commentRepository.save(Mockito.any(CommentRepository.CommentEntry.class))
         ).thenAnswer(mock -> mock.getArguments()[0]); // Return same object as was passed.
-        CommentRequest commentRequest = CommentRequest
-                .newBuilder()
-                .setAuthor("AI")
-                .setContent("Your post is better than I can write.")
-                .setPostId("POST-ID")
-                .build();
+        Comment comment = new Comment(
+                "AI", "Your post is better than I can write.", "POST-ID"
+        );
 
         CommentRepository.CommentEntry commentFromResponse = commentController.create(
-                commentRequest
+                comment
         ).getBody();
 
-        Mockito.verify(commentRepository).save(
-                Mockito.any(MongoDbCommentRepository.CommentEntry.class)
-        );
+        Mockito.verify(commentRepository).save(Mockito.any(CommentRepository.CommentEntry.class));
         expect.toMatchSnapshot(jsonWithMaskedProperties(commentFromResponse, "id"));
     }
 

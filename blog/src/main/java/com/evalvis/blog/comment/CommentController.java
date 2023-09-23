@@ -4,7 +4,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import protobufs.CommentRequest;
 
 import java.util.List;
 
@@ -12,24 +11,17 @@ import java.util.List;
 @RequestMapping("comments")
 final class CommentController {
 
-    private final CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository;
+    private final CommentRepository commentRepository;
 
     @Autowired
-    CommentController(@Qualifier("mongoDbCommentRepository") CommentRepository<MongoDbCommentRepository.CommentEntry> commentRepository) {
+    CommentController(@Qualifier("mongoDbCommentRepository") CommentRepository commentRepository) {
         this.commentRepository = commentRepository;
     }
 
     @PostMapping(value = "/create")
-    ResponseEntity<CommentRepository.CommentEntry> create(@RequestBody CommentRequest commentRequest)
+    ResponseEntity<CommentRepository.CommentEntry> create(@RequestBody Comment comment)
     {
-        return ResponseEntity.ok(
-                commentRepository.save(
-                        new MongoDbCommentRepository.CommentEntry(
-                                commentRequest.getAuthor(), commentRequest.getContent(),
-                                commentRequest.getPostId()
-                        )
-                )
-        );
+        return ResponseEntity.ok(comment.save(commentRepository));
     }
 
     @GetMapping(value = "/list-comments/{postId}")
