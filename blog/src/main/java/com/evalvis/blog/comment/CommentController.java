@@ -9,6 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("comments")
+@CrossOrigin(origins = "http://localhost:3000")
 final class CommentController {
 
     private final CommentRepository commentRepository;
@@ -18,16 +19,16 @@ final class CommentController {
         this.commentRepository = commentRepository;
     }
 
-    @PostMapping(value = "/create")
-    ResponseEntity<CommentRepository.CommentEntry> create(@RequestBody Comment comment)
-    {
-        return ResponseEntity.ok(comment.save(commentRepository));
-    }
-
     @GetMapping(value = "/list-comments/{postId}")
     ResponseEntity<List<CommentRepository.CommentEntry>> listCommentsOfPost(
             @PathVariable String postId
     ) {
         return ResponseEntity.ok(commentRepository.findCommentEntriesByPostEntryId(postId));
+    }
+
+    @PostMapping(value = "/create")
+    ResponseEntity<CommentRepository.CommentEntry> create(@RequestBody Comment comment)
+    {
+        return ResponseEntity.ok(comment.save(commentRepository));
     }
 }
