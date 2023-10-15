@@ -33,5 +33,5 @@ build/
 .vscode/
 
 
-### repos ###
-/blog/repo/*
+### logs ###
+/blog/logs/*
