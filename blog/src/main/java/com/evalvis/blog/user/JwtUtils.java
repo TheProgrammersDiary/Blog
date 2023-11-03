@@ -20,7 +20,7 @@ public class JwtUtils {
     private static final Logger logger = LoggerFactory.getLogger(JwtUtils.class);
 
     private final SecretKey key = Jwts.SIG.HS256.key().build();
-    private final int jwtExpirationMs = 1000 * 60;
+    private final int jwtExpirationMs = 1000 * 60 * 10;
 
     public String generateJwtToken(Authentication authentication) {
         return Jwts.builder()

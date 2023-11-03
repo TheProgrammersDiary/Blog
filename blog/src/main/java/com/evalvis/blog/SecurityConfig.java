@@ -1,5 +1,6 @@
 package com.evalvis.blog;
 
+import com.evalvis.blog.user.JwtFilter;
 import com.evalvis.blog.user.UserDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableMethodSecurity
@@ -37,9 +39,21 @@ public class SecurityConfig {
                         )
                 )
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(requests -> requests.anyRequest().permitAll());
+                .authorizeHttpRequests(
+                        requests -> requests
+                                .requestMatchers("/users/signup", "/users/login", "/actuator/prometheus")
+                                .permitAll()
+                                .anyRequest()
+                                .authenticated()
+                );
         http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public JwtFilter jwtFilter() {
+        return new JwtFilter();
     }
 
     @Bean
