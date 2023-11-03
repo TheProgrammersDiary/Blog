@@ -6,8 +6,11 @@ import jakarta.validation.constraints.Email;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface UserRepository extends CrudRepository<UserRepository.UserEntry, String> {
+    Optional<UserEntry> findByUsername(String username);
     @Entity(name="blog_user")
     @JsonPropertyOrder(alphabetic=true)
     class UserEntry {
