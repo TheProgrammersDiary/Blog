@@ -2,6 +2,7 @@ package com.evalvis.blog.user;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -16,6 +17,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Optional;
 
 public class JwtFilter extends OncePerRequestFilter {
@@ -51,10 +53,27 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     private Optional<String> parseJwt(HttpServletRequest request) {
-        String headerAuth = request.getHeader("Authorization");
-        if (StringUtils.hasText(headerAuth) && headerAuth.startsWith("Bearer ")) {
-            return Optional.of(headerAuth.substring(7));
+        return Optional
+                .ofNullable(request.getHeader("Authorization"))
+                .map(this::parseJwtFromHeader)
+                .orElse(parseJwtFromCookies(request.getCookies()));
+    }
+
+    private Optional<String> parseJwtFromHeader(String authHeader) {
+        if (StringUtils.hasText(authHeader) && authHeader.startsWith("Bearer ")) {
+            return Optional.of(authHeader.substring(7));
         }
         return Optional.empty();
+    }
+
+    private Optional<String> parseJwtFromCookies(Cookie[] cookies) {
+        if(cookies == null) {
+            return Optional.empty();
+        }
+        return Arrays
+                .stream(cookies)
+                .filter(cookie -> cookie.getName().equals("jwt"))
+                .findFirst()
+                .map(Cookie::getValue);
     }
 }

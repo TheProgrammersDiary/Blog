@@ -1,5 +1,6 @@
 package com.evalvis.blog;
 
+import com.evalvis.blog.logging.HttpLoggingFilter;
 import com.evalvis.blog.user.JwtFilter;
 import com.evalvis.blog.user.UserDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
@@ -8,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -24,7 +26,9 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
     @Autowired
-    UserDetailsServiceImpl userDetailsService;
+    private UserDetailsServiceImpl userDetailsService;
+    @Autowired
+    private HttpLoggingFilter loggingFilter;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -43,10 +47,13 @@ public class SecurityConfig {
                         requests -> requests
                                 .requestMatchers("/users/signup", "/users/login", "/actuator/prometheus")
                                 .permitAll()
+                                .requestMatchers(HttpMethod.OPTIONS)
+                                .permitAll()
                                 .anyRequest()
                                 .authenticated()
                 );
         http.authenticationProvider(authenticationProvider());
+        http.addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class);
         http.addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
