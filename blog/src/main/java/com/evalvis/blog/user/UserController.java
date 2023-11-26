@@ -1,5 +1,7 @@
 package com.evalvis.blog.user;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -12,8 +14,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.time.Duration;
-import java.util.Date;
 
 @RestController
 @RequestMapping("users")
@@ -22,15 +24,16 @@ public class UserController {
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
-    private final JwtUtils jwtUtils;
+    private final BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
 
     public @Autowired UserController(
-            UserRepository userRepository, PasswordEncoder encoder, AuthenticationManager authManager, JwtUtils jwtUtils
+            UserRepository userRepository, PasswordEncoder encoder,
+            AuthenticationManager authManager, BlacklistedJwtTokenRepository blacklistedJwtTokenRepository
     ) {
         this.userRepository = userRepository;
         this.encoder = encoder;
         this.authManager = authManager;
-        this.jwtUtils = jwtUtils;
+        this.blacklistedJwtTokenRepository = blacklistedJwtTokenRepository;
     }
 
     @PostMapping("/signup")
@@ -40,19 +43,38 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<Date> login(@RequestBody User user, HttpServletResponse response) {
+    public void login(@RequestBody User user, HttpServletResponse response) throws IOException {
         Authentication authentication = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        String jwt = jwtUtils.generateJwtToken(authentication);
-        ResponseCookie cookie = ResponseCookie.from("jwt", jwt)
+        JwtToken token = JwtToken.create(authentication, blacklistedJwtTokenRepository);
+        ResponseCookie cookie = ResponseCookie.from("jwt", token.retrieve())
                 .httpOnly(true)
                 //.secure(true) // TODO: uncomment then HTTPS is enabled.
                 .maxAge(Duration.ofMinutes(10))
                 .path("/")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        return ResponseEntity.ok(jwtUtils.expirationDate(jwt));
+        response.getWriter().println(
+                new ObjectMapper()
+                        .createObjectNode()
+                        .put("username", token.username())
+                        .put("expirationDate", token.expirationDate().toString())
+                        .toPrettyString()
+        );
     }
+
+    @PostMapping("/logout")
+    public void logout(HttpServletRequest request) {
+        JwtToken
+                .existing(request, blacklistedJwtTokenRepository)
+                .ifPresentOrElse(
+                        blacklistedJwtTokenRepository::blacklistToken,
+                        () -> {
+                            throw new RuntimeException("Possible security issue. Logout is missing jwt token.");
+                        }
+                );
+    }
+
 }
