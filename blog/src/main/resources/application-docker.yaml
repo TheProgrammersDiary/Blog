@@ -14,6 +14,13 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
     change-log: classpath:/liquibase/postgresql/changelog/liquibase.changelog_master.yaml
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${google_client_id}
+            client-secret: ${google_client_secret}
 
 management:
   endpoint:

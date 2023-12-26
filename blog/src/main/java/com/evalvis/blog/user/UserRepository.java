@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends CrudRepository<UserRepository.UserEntry, String> {
     Optional<UserEntry> findByUsername(String username);
+    boolean existsByEmail(String email);
     @Entity(name="blog_user")
     @JsonPropertyOrder(alphabetic=true)
     class UserEntry {
@@ -23,8 +24,11 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
         @Column(nullable = false, unique = true)
         @Email(message = "Invalid email address")
         private String email;
-        @Column(nullable = false)
         private String password;
+
+        public UserEntry(String username, String email) {
+            this(username, email, null);
+        }
 
         public UserEntry(String username, String email, String password) {
             this.username = username;
