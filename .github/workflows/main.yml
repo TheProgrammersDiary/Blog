@@ -17,6 +17,14 @@ jobs:
       with:
         java-version: 17
         distribution: temurin
+    - uses: s4u/maven-settings-action@v2.8.0
+      with:
+        servers: |
+          [{
+            "id": "github",
+            "username": "EvalVis",
+            "password": "${{ secrets.PACKAGE_READ }}"
+          }]
     - name: Cache
       uses: actions/cache@v3
       with:
