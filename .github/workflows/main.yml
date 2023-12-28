@@ -17,14 +17,6 @@ jobs:
       with:
         java-version: 17
         distribution: temurin
-    - uses: s4u/maven-settings-action@v2.8.0
-      with:
-        servers: |
-          [{
-            "id": "github",
-            "username": "EvalVis",
-            "password": "${{ secrets.PACKAGE_READ }}"
-          }]
     - name: Cache
       uses: actions/cache@v3
       with:
@@ -32,7 +24,9 @@ jobs:
         key: ${{runner.os}}-m2-${{hashFiles('blog/pom.xml')}}
         restore-keys: ${{runner.os}}-m2
     - name: Package
-      run: mvn -B -f blog/pom.xml package
+      run: mvn -B -s /.github/workflows/maven-settings.xml -f blog/pom.xml package
+      env:
+        ACCESS_TOKEN: ${{ secrets.PACKAGE_READ }}
     - name: Publish Test Report
       if: success() || failure()
       uses: scacap/action-surefire-report@v1
