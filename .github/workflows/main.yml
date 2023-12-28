@@ -19,7 +19,6 @@ jobs:
         distribution: temurin
     - uses: s4u/maven-settings-action@v2.8.0
       with:
-        override: false
         servers: |
           [{
             "id": "github",
