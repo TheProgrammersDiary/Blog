@@ -1,5 +1,8 @@
 package com.evalvis.blog.user;
 
+import com.evalvis.security.BlacklistedJwtTokenRepository;
+import com.evalvis.security.JwtKey;
+import com.evalvis.security.JwtToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -25,15 +28,18 @@ public class UserController {
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
     private final BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
+    private final JwtKey key;
 
     public @Autowired UserController(
             UserRepository userRepository, PasswordEncoder encoder,
-            AuthenticationManager authManager, BlacklistedJwtTokenRepository blacklistedJwtTokenRepository
+            AuthenticationManager authManager, BlacklistedJwtTokenRepository blacklistedJwtTokenRepository,
+            JwtKey key
     ) {
         this.userRepository = userRepository;
         this.encoder = encoder;
         this.authManager = authManager;
         this.blacklistedJwtTokenRepository = blacklistedJwtTokenRepository;
+        this.key = key;
     }
 
     @PostMapping("/signup")
@@ -48,8 +54,8 @@ public class UserController {
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
         );
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        JwtToken token = JwtToken.create(authentication, blacklistedJwtTokenRepository);
-        ResponseCookie cookie = ResponseCookie.from("jwt", token.retrieve())
+        JwtToken token = JwtToken.create(authentication, key.value(), blacklistedJwtTokenRepository);
+        ResponseCookie cookie = ResponseCookie.from("jwt", token.value())
                 .httpOnly(true)
                 //.secure(true) // TODO: uncomment then HTTPS is enabled.
                 .maxAge(Duration.ofMinutes(10))
@@ -68,7 +74,7 @@ public class UserController {
     @PostMapping("/logout")
     public void logout(HttpServletRequest request) {
         JwtToken
-                .existing(request, blacklistedJwtTokenRepository)
+                .existing(request, key.value(), blacklistedJwtTokenRepository)
                 .ifPresentOrElse(
                         blacklistedJwtTokenRepository::blacklistToken,
                         () -> {

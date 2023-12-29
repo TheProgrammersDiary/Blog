@@ -1,5 +1,9 @@
 package com.evalvis.blog.user;
 
+import com.evalvis.security.BlacklistedJwtTokenRepository;
+import com.evalvis.security.JwtKey;
+import com.evalvis.security.JwtToken;
+import com.evalvis.security.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
@@ -23,11 +27,11 @@ import java.time.Duration;
 
 public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessHandler {
     @Autowired
-    private UserDetailsServiceImpl userDetailsService;
-    @Autowired
     private UserRepository userRepository;
     @Autowired
     private BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
+    @Autowired
+    private JwtKey key;
 
     private static final Logger log = LoggerFactory.getLogger(OAuth2AuthorizationSuccessHandler.class);
 
@@ -49,14 +53,14 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         if (!userRepository.existsByEmail(email)) {
             userRepository.save(new UserRepository.UserEntry(username, email));
         }
-        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+        UserDetails userDetails = new User(username, null);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities()
         );
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
-        JwtToken token = JwtToken.create(authToken, blacklistedJwtTokenRepository);
-        ResponseCookie cookie = ResponseCookie.from("jwt", token.retrieve())
+        JwtToken token = JwtToken.create(authToken, key.value(), blacklistedJwtTokenRepository);
+        ResponseCookie cookie = ResponseCookie.from("jwt", token.value())
                 .httpOnly(true)
                 //.secure(true) // TODO: uncomment then HTTPS is enabled.
                 .maxAge(Duration.ofMinutes(10))

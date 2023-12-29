@@ -1,9 +1,9 @@
 package com.evalvis.blog;
 
 import com.evalvis.blog.logging.HttpLoggingFilter;
-import com.evalvis.blog.user.JwtFilter;
 import com.evalvis.blog.user.OAuth2AuthorizationSuccessHandler;
 import com.evalvis.blog.user.UserDetailsServiceImpl;
+import com.evalvis.security.JwtFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +32,8 @@ public class SecurityConfig {
     private UserDetailsServiceImpl userDetailsService;
     @Autowired
     private HttpLoggingFilter loggingFilter;
+    @Autowired
+    private JwtFilter jwtFilter;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -48,9 +50,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(
                         requests -> requests
-                                .requestMatchers("/users/signup", "/users/login", "/actuator/prometheus")
-                                .permitAll()
                                 .requestMatchers(HttpMethod.OPTIONS)
+                                .permitAll()
+                                .requestMatchers(
+                                        "/users/signup", "/users/login",
+                                        "/actuator/prometheus",
+                                        "/comments/list-comments/{postId}", "/comments/create"
+                                )
                                 .permitAll()
                                 .anyRequest()
                                 .authenticated()
@@ -58,18 +64,13 @@ public class SecurityConfig {
                 .oauth2Login(oauth2 -> oauth2.successHandler(oAuth2AuthorizationSuccessHandler()));
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(loggingFilter, UsernamePasswordAuthenticationFilter.class);
-        http.addFilterBefore(jwtFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 
     @Bean
     public OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler() {
         return new OAuth2AuthorizationSuccessHandler();
-    }
-
-    @Bean
-    public JwtFilter jwtFilter() {
-        return new JwtFilter();
     }
 
     @Bean

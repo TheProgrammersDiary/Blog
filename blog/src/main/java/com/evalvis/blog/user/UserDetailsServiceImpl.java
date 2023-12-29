@@ -15,11 +15,10 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     @Transactional
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return UserDetailsImpl.build(
-                userRepository
-                        .findByUsername(username)
-                        .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username))
-        );
+        UserRepository.UserEntry user = userRepository
+                .findByUsername(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with username: " + username));
+        return new com.evalvis.security.User(user.getUsername(), user.getPassword());
     }
 
 }
