@@ -1,0 +1,8 @@
+com.evalvis.blog.comment.CommentTests.createsComment=[
+  {
+    "author": "author",
+    "content": "content",
+    "id": "#hidden#",
+    "postEntryId": "not-important"
+  }
+]

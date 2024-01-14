@@ -44,8 +44,8 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         String username;
         String providerName = ((OAuth2AuthenticationToken) authentication).getAuthorizedClientRegistrationId();
         if(providerName.equals("google")) {
-            email = ((DefaultOidcUser)authentication.getPrincipal()).getEmail();
-            username = ((DefaultOidcUser)authentication.getPrincipal()).getAttribute("name");
+            email = ((DefaultOidcUser) authentication.getPrincipal()).getEmail();
+            username = ((DefaultOidcUser) authentication.getPrincipal()).getAttribute("name");
         }
         else {
             throw new RuntimeException("Unrecognized Oauth2 provider.");

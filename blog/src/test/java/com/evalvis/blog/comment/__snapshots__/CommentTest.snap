@@ -1,8 +1,0 @@
-createsComment=[
-  {
-    "author": "AI",
-    "content": "Your post is better than I can write.",
-    "id": "#hidden#",
-    "postEntryId": "POST-ID"
-  }
-]

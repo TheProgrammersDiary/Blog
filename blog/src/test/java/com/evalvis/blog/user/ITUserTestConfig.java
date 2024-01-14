@@ -1,0 +1,34 @@
+package com.evalvis.blog.user;
+
+import com.evalvis.blog.SecurityConfig;
+import com.evalvis.blog.logging.HttpLoggingFilter;
+import com.evalvis.security.BlacklistedJwtTokenRepository;
+import com.evalvis.security.JwtKey;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
+import org.springframework.context.annotation.*;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+
+@Configuration
+@EnableAutoConfiguration(exclude = DataSourceAutoConfiguration.class)
+@ComponentScan("com.evalvis.security")
+@Import(value = {
+        UserController.class, SecurityConfig.class, UserDetailsServiceImpl.class, HttpLoggingFilter.class, JwtKey.class
+})
+public class ITUserTestConfig {
+    @Bean
+    public UserRepository fakeUserRepository() {
+        return new FakeUserRepository();
+    }
+
+    @Bean
+    public ClientRegistrationRepository fakeClientRegistrationRepository() {
+        return new FakeClientRegistrationRepository();
+    }
+
+    @Bean
+    @Primary
+    public BlacklistedJwtTokenRepository fakeBlacklistedJwtTokenRepository() {
+        return new FakeBlacklistedJwtTokenRepository();
+    }
+}
