@@ -38,6 +38,8 @@ public class SecurityConfig {
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                .requiresChannel(channel ->
+                        channel.anyRequest().requiresSecure())
                 .csrf(csrf -> csrf.disable())
                 .exceptionHandling(
                         exception -> exception.authenticationEntryPoint(

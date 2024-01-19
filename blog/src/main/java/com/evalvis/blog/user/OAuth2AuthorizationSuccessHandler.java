@@ -68,7 +68,7 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.sendRedirect(
-                "http://localhost:3000/auth_login_success" +
+                "https://localhost:3000/auth_login_success" +
                         "?username=" + URLEncoder.encode(token.username(), StandardCharsets.UTF_8) +
                         "&expirationDate="
                         + URLEncoder.encode(token.expirationDate().toString(), StandardCharsets.UTF_8)
