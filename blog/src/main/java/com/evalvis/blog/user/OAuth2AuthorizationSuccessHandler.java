@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -32,6 +33,8 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
     private BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
     @Autowired
     private JwtKey key;
+    @Value("${blog.frontend-url}")
+    private String frontendUrl;
 
     private static final Logger log = LoggerFactory.getLogger(OAuth2AuthorizationSuccessHandler.class);
 
@@ -68,7 +71,7 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.sendRedirect(
-                "https://localhost:3000/auth_login_success" +
+                frontendUrl + "/auth_login_success" +
                         "?username=" + URLEncoder.encode(token.username(), StandardCharsets.UTF_8) +
                         "&expirationDate="
                         + URLEncoder.encode(token.expirationDate().toString(), StandardCharsets.UTF_8)

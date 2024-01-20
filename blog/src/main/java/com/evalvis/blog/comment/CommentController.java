@@ -9,9 +9,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("comments")
-@CrossOrigin(origins = "https://localhost:3000")
 final class CommentController {
-
     private final CommentRepository commentRepository;
 
     @Autowired

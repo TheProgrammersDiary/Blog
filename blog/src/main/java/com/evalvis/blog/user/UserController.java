@@ -22,7 +22,6 @@ import java.time.Duration;
 
 @RestController
 @RequestMapping("users")
-@CrossOrigin(origins = "https://localhost:3000", allowCredentials = "true")
 public class UserController {
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
