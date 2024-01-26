@@ -56,7 +56,7 @@ public class UserController {
         JwtToken token = JwtToken.create(authentication, key.value(), blacklistedJwtTokenRepository);
         ResponseCookie cookie = ResponseCookie.from("jwt", token.value())
                 .httpOnly(true)
-                //.secure(true) // TODO: uncomment then HTTPS is enabled.
+                .secure(true)
                 .maxAge(Duration.ofMinutes(10))
                 .path("/")
                 .build();
@@ -65,7 +65,7 @@ public class UserController {
                 new ObjectMapper()
                         .createObjectNode()
                         .put("username", token.username())
-                        .put("expirationDate", token.expirationDate().toString())
+                        .put("csrf", token.csrfToken())
                         .toPrettyString()
         );
     }

@@ -65,7 +65,7 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         JwtToken token = JwtToken.create(authToken, key.value(), blacklistedJwtTokenRepository);
         ResponseCookie cookie = ResponseCookie.from("jwt", token.value())
                 .httpOnly(true)
-                //.secure(true) // TODO: uncomment then HTTPS is enabled.
+                .secure(true)
                 .maxAge(Duration.ofMinutes(10))
                 .path("/")
                 .build();
@@ -73,8 +73,8 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         response.sendRedirect(
                 frontendUrl + "/auth_login_success" +
                         "?username=" + URLEncoder.encode(token.username(), StandardCharsets.UTF_8) +
-                        "&expirationDate="
-                        + URLEncoder.encode(token.expirationDate().toString(), StandardCharsets.UTF_8)
+                        "&csrf="
+                        + URLEncoder.encode(token.csrfToken(), StandardCharsets.UTF_8)
         );
     }
 }
