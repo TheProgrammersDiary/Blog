@@ -17,7 +17,7 @@ public class FakeUserRepository implements UserRepository {
         return entries
                 .values()
                 .stream()
-                .filter(user -> user.getUsername().equals(username))
+                .filter(user -> user.getUsername().equals(username) && user.getPassword() != null)
                 .map(UserEntry::getPassword)
                 .findFirst();
     }
