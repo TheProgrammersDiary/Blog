@@ -24,7 +24,6 @@ import java.util.Enumeration;
 @Component
 @WebFilter(filterName = "HttpLoggingFilter")
 public final class HttpLoggingFilter extends OncePerRequestFilter {
-
     private static final Logger log = LoggerFactory.getLogger(HttpLoggingFilter.class);
     @Override
     protected void doFilterInternal(

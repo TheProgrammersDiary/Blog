@@ -184,6 +184,8 @@
                         <exclude>com/evalvis/blog/logging/HttpLoggingFilter.class</exclude>
                         <exclude>com/evalvis/blog/comment/CommentRepository$CommentEntry.class</exclude>
                         <exclude>com/evalvis/blog/user/UserRepository$UserEntry.class</exclude>
+                        <exclude>com/evalvis/blog/logging/BadRequestException.class</exclude>
+                        <exclude>com/evalvis/blog/logging/RestNotFoundException.class</exclude>
                     </excludes>
                 </configuration>
                 <executions>

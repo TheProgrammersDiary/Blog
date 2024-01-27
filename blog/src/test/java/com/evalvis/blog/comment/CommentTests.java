@@ -1,7 +1,6 @@
 package com.evalvis.blog.comment;
 
 import au.com.origin.snapshots.Expect;
-import au.com.origin.snapshots.annotations.SnapshotName;
 import au.com.origin.snapshots.junit5.SnapshotExtension;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -15,7 +14,6 @@ import java.util.List;
 
 @ExtendWith({SnapshotExtension.class})
 public class CommentTests {
-
     private Expect expect;
 
     private final CommentController controller;
@@ -46,7 +44,7 @@ public class CommentTests {
         List<CommentRepository.CommentEntry> savedComments = mother.createPostComments("postId");
 
         List<CommentRepository.CommentEntry> foundComments = new ArrayList(
-                controller.listCommentsOfPost("postId").getBody()
+                controller.commentsOfPost("postId").getBody()
         );
 
         Assertions.assertThat(foundComments)

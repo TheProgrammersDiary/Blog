@@ -1,7 +1,6 @@
 package com.evalvis.blog.comment;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -13,14 +12,12 @@ final class CommentController {
     private final CommentRepository commentRepository;
 
     @Autowired
-    CommentController(@Qualifier("mongoDbCommentRepository") CommentRepository commentRepository) {
+    CommentController(CommentRepository commentRepository) {
         this.commentRepository = commentRepository;
     }
 
     @GetMapping(value = "/list-comments/{postId}")
-    ResponseEntity<List<CommentRepository.CommentEntry>> listCommentsOfPost(
-            @PathVariable String postId
-    ) {
+    ResponseEntity<List<CommentRepository.CommentEntry>> commentsOfPost(@PathVariable String postId) {
         return ResponseEntity.ok(commentRepository.findCommentEntriesByPostEntryId(postId));
     }
 

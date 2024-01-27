@@ -13,7 +13,7 @@ public class UserPassword {
 
     public void changePassword(UserRepository repository, String username, PasswordEncoder encoder) {
         if(repository.findPasswordByUsername(username).isEmpty()) {
-            throw new RuntimeException("Can't change password because when using OAuth!");
+            throw new RuntimeException("Can't change password when using OAuth!");
         }
         if(!encoder.matches(currentPassword, repository.findPasswordByUsername(username).get())) {
             throw new RuntimeException("Old and new passwords do not match!");
