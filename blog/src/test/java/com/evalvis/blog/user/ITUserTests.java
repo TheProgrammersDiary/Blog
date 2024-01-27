@@ -8,6 +8,9 @@ import com.evalvis.security.BlacklistedJwtTokenRepository;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpHeaders;
@@ -90,16 +93,7 @@ public class ITUserTests {
 
     @Test
     void logsInViaOAuth2() throws IOException {
-        String username = UUID.randomUUID().toString();
-        DefaultOidcUser user = new DefaultOidcUser(
-                Collections.emptyList(),
-                new OidcIdToken(
-                        "fakeToken", Instant.now(), Instant.now().plus(Duration.ofMinutes(10)),
-                        Map.of("email", UUID.randomUUID().toString(), "name", username, "sub", username)
-                )
-        );
-
-        loginViaOauth2(user);
+        loginViaOauth2(UUID.randomUUID().toString());
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
@@ -109,6 +103,59 @@ public class ITUserTests {
     @Test
     void logsInViaOAuth2MultipleTimes() throws IOException {
         String username = UUID.randomUUID().toString();
+
+        loginViaOauth2(username);
+        loginViaOauth2(username);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication);
+        assertTrue(authentication.isAuthenticated());
+    }
+
+    @Test
+    void changesPassword() {
+        String jwt = mother
+                .loginNewUser("abc", "abc@gmail.com", "currentPassword")
+                .getHeader(HttpHeaders.SET_COOKIE)
+                .split("jwt=")[1]
+                .split(";")[0];
+
+        controller.changePassword(new UserPassword("currentPassword", "newPassword"));
+
+        controller.logout(new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)));
+        mother.login("abc", "abc@gmail.com", "newPassword");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication);
+        assertTrue(authentication.isAuthenticated());
+    }
+
+    @Test
+    void failsToChangePasswordWhenOldAndNewPasswordsMismatch() {
+        mother.loginNewUser("abc", "abc@gmail.com", "currentPassword");
+
+        assertThrows(
+                RuntimeException.class,
+                () -> controller.changePassword(
+                        new UserPassword("wrongPassword", "newPassword")
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", "nonEmptyPassword"})
+    void failsToChangePasswordWhenUsingOauth(String password) throws IOException {
+        loginViaOauth2(UUID.randomUUID().toString());
+
+        assertThrows(
+                RuntimeException.class,
+                () -> controller.changePassword(
+                        new UserPassword(password, "newPassword")
+                )
+        );
+    }
+
+    private void loginViaOauth2(String username) throws IOException {
         DefaultOidcUser user = new DefaultOidcUser(
                 Collections.emptyList(),
                 new OidcIdToken(
@@ -116,16 +163,6 @@ public class ITUserTests {
                         Map.of("email", UUID.randomUUID().toString(), "name", username, "sub", username)
                 )
         );
-
-        loginViaOauth2(user);
-        loginViaOauth2(user);
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        assertNotNull(authentication);
-        assertTrue(authentication.isAuthenticated());
-    }
-
-    private void loginViaOauth2(DefaultOidcUser user) throws IOException {
         oAuth2AuthorizationSuccessHandler.onAuthenticationSuccess(
                 new FakeHttpServletRequest(),
                 new FakeHttpServletResponse(),

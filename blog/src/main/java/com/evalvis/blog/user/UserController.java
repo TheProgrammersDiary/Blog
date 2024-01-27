@@ -48,7 +48,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public void login(@RequestBody User user, HttpServletResponse response) throws IOException {
+    void login(@RequestBody User user, HttpServletResponse response) throws IOException {
         Authentication authentication = authManager.authenticate(
                 new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
         );
@@ -70,8 +70,15 @@ public class UserController {
         );
     }
 
+    @PatchMapping("/change-password")
+    void changePassword(@RequestBody UserPassword userPassword) {
+        userPassword.changePassword(
+                userRepository, SecurityContextHolder.getContext().getAuthentication().getName(), encoder
+        );
+    }
+
     @PostMapping("/logout")
-    public void logout(HttpServletRequest request) {
+    void logout(HttpServletRequest request) {
         JwtToken
                 .existing(request, key.value(), blacklistedJwtTokenRepository)
                 .ifPresentOrElse(

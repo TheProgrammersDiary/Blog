@@ -1,8 +1,11 @@
 package com.evalvis.blog.user;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
+import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +16,8 @@ import java.util.UUID;
 @Repository
 public interface UserRepository extends CrudRepository<UserRepository.UserEntry, String> {
     Optional<UserEntry> findByUsername(String username);
+    @Query("SELECT user.password FROM blog_user user WHERE username = :username")
+    Optional<String> findPasswordByUsername(String username);
     boolean existsByEmail(String email);
     @Entity(name="blog_user")
     @JsonPropertyOrder(alphabetic=true)
@@ -26,6 +31,11 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
         @Email(message = "Invalid email address")
         private String email;
         private String password;
+
+        public static UserEntry withChangedPassword(String newPassword, UserEntry userEntry) {
+            userEntry.password = newPassword;
+            return userEntry;
+        }
 
         public UserEntry(String username, String email) {
             this(username, email, null);

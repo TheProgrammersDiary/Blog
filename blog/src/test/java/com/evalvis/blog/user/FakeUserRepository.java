@@ -13,6 +13,16 @@ public class FakeUserRepository implements UserRepository {
     }
 
     @Override
+    public Optional<String> findPasswordByUsername(String username) {
+        return entries
+                .values()
+                .stream()
+                .filter(user -> user.getUsername().equals(username))
+                .map(UserEntry::getPassword)
+                .findFirst();
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return entries.values().stream().anyMatch(user -> user.getEmail().equals(email));
     }
