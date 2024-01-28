@@ -15,8 +15,8 @@ public class PasswordResetRequest {
     }
 
     public void request(
-            PasswordResetRepository passwordResetRepository, UserRepository userRepository, Email emailSender,
-            PasswordEncoder encoder
+            PasswordResetRepository passwordResetRepository, UserRepository userRepository,
+            Email emailSender, PasswordEncoder encoder
     ) {
         userRepository.findByEmail(email).ifPresent(user -> {
             if(user.getPassword() == null) {

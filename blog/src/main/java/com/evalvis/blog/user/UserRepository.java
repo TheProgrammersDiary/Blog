@@ -11,26 +11,22 @@ import org.springframework.stereotype.Repository;
 
 import java.util.Objects;
 import java.util.Optional;
-import java.util.UUID;
 
 @Repository
 public interface UserRepository extends CrudRepository<UserRepository.UserEntry, String> {
-    Optional<UserEntry> findByUsername(String username);
-    @Query("SELECT user.password FROM blog_user user WHERE username = :username")
-    Optional<String> findPasswordByUsername(String username);
+    @Query("SELECT user.password FROM blog_user user WHERE email = :email")
+    Optional<String> findPasswordByEmail(String email);
     Optional<UserEntry> findByEmail(String email);
     boolean existsByEmail(String email);
     @Entity(name="blog_user")
     @JsonPropertyOrder(alphabetic=true)
     class UserEntry {
         @Id
-        @Column(unique = true)
-        private String id;
-        @Column(nullable = false, unique = true)
-        private String username;
         @Column(nullable = false, unique = true)
         @Email(message = "Invalid email address")
         private String email;
+        @Column(nullable = false)
+        private String username;
         private String password;
 
         public static UserEntry withChangedPassword(String newPassword, UserEntry userEntry) {
@@ -39,30 +35,27 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
         }
 
         public UserEntry(String username, String email) {
-            this(username, email, null);
+            this(email, username, null);
         }
 
-        public UserEntry(String username, String email, String password) {
-            this.id = UUID.randomUUID().toString();
-            this.username = username;
+        public UserEntry(String email, String username, String password) {
             this.email = email;
+            this.username = username;
             this.password = password;
         }
 
         public UserEntry() {
         }
 
-        public String getId() {
-            return id;
+
+        public String getEmail() {
+            return email;
         }
 
         public String getUsername() {
             return username;
         }
 
-        public String getEmail() {
-            return email;
-        }
 
         public String getPassword() {
             return password;
@@ -73,12 +66,12 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             UserEntry userEntry = (UserEntry) o;
-            return Objects.equals(id, userEntry.id);
+            return Objects.equals(email, userEntry.email);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(id);
+            return Objects.hash(email);
         }
     }
 }

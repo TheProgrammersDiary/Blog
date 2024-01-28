@@ -8,16 +8,11 @@ public class FakeUserRepository implements UserRepository {
     private final Map<String, UserEntry> entries = new HashMap<>();
 
     @Override
-    public Optional<UserEntry> findByUsername(String username) {
-        return entries.values().stream().filter(user -> user.getUsername().equals(username)).findFirst();
-    }
-
-    @Override
-    public Optional<String> findPasswordByUsername(String username) {
+    public Optional<String> findPasswordByEmail(String email) {
         return entries
                 .values()
                 .stream()
-                .filter(user -> user.getUsername().equals(username) && user.getPassword() != null)
+                .filter(user -> user.getEmail().equals(email) && user.getPassword() != null)
                 .map(UserEntry::getPassword)
                 .findFirst();
     }
@@ -34,7 +29,7 @@ public class FakeUserRepository implements UserRepository {
 
     @Override
     public <S extends UserEntry> S save(S entry) {
-        entries.put(entry.getId(), entry);
+        entries.put(entry.getEmail(), entry);
         return entry;
     }
 

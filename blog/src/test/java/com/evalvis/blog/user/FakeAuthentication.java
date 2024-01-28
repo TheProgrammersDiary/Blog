@@ -9,8 +9,8 @@ import java.util.Collection;
 public final class FakeAuthentication implements Authentication {
     private final com.evalvis.security.User user;
 
-    public FakeAuthentication(String username, String password) {
-        this.user = new User(username, password);
+    public FakeAuthentication(String email, String password) {
+        this.user = new User(email, password);
     }
 
     @Override

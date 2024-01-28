@@ -12,32 +12,28 @@ public class UserMother {
         this.controller = controller;
     }
 
-    public FakeHttpServletResponse loginNewUser(String username, String email, String password) {
-        signUp(username, email, password);
-        return login(username, email, password);
+    public FakeHttpServletResponse loginNewUser(String email, String username, String password) {
+        signUp(email, username, password);
+        return login(email, password);
     }
 
     public FakeHttpServletResponse loginNewUser() {
-        String username = UUID.randomUUID().toString();
-        signUp(username);
-        return login(username, UUID.randomUUID().toString(), "test");
+        String email = UUID.randomUUID().toString();
+        signUp(email, "tester", "test");
+        return login(email, "test");
     }
 
-    public FakeHttpServletResponse login(String username, String email, String password) {
+    public FakeHttpServletResponse login(String email, String password) {
         try {
             FakeHttpServletResponse response = new FakeHttpServletResponse();
-            controller.login(new User(username, email, password), response);
+            controller.login(new LoginUser(email, password), response);
             return response;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void signUp(String username, String email, String password) {
-        controller.signUp(new User(username, email, password)).getBody();
-    }
-
-    public void signUp(String username) {
-        controller.signUp(new User(username, "tester@gmail.com", "test")).getBody();
+    public void signUp(String email, String username, String password) {
+        controller.signUp(new SignUpUser(email, username, password));
     }
 }

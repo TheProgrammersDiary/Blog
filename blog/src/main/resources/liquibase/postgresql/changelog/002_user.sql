@@ -1,1 +1,0 @@
-ALTER TABLE blog_user ALTER COLUMN password DROP NOT NULL;

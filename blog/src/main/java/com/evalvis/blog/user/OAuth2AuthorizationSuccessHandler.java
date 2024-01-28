@@ -72,7 +72,7 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
         response.sendRedirect(
                 frontendUrl + "/auth_login_success" +
-                        "?username=" + URLEncoder.encode(token.username(), StandardCharsets.UTF_8) +
+                        "?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) +
                         "&csrf="
                         + URLEncoder.encode(token.csrfToken(), StandardCharsets.UTF_8)
         );

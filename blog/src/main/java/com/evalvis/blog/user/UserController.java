@@ -8,13 +8,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -32,8 +29,6 @@ public class UserController {
     private final BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
     private final JwtKey key;
     private final Email emailSender;
-    @Value("${blog.frontend-url}")
-    private String frontendUrl;
 
     public @Autowired UserController(
             UserRepository userRepository, PasswordResetRepository passwordResetRepository, PasswordEncoder encoder,
@@ -50,18 +45,16 @@ public class UserController {
     }
 
     @PostMapping("/signup")
-    public ResponseEntity<String> signUp(@RequestBody User user) {
-        user.save(userRepository, encoder);
+    public ResponseEntity<String> signUp(@RequestBody SignUpUser signUpUser) {
+        signUpUser.save(userRepository, encoder);
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
-    void login(@RequestBody User user, HttpServletResponse response) throws IOException {
-        Authentication authentication = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user.getUsername(), user.getPassword())
+    void login(@RequestBody LoginUser loginUser, HttpServletResponse response) throws IOException {
+        JwtToken token = JwtToken.create(
+                loginUser.authenticate(authManager), key.value(), blacklistedJwtTokenRepository
         );
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        JwtToken token = JwtToken.create(authentication, key.value(), blacklistedJwtTokenRepository);
         ResponseCookie cookie = ResponseCookie.from("jwt", token.value())
                 .httpOnly(true)
                 .secure(true)
@@ -72,7 +65,7 @@ public class UserController {
         response.getWriter().println(
                 new ObjectMapper()
                         .createObjectNode()
-                        .put("username", token.username())
+                        .put("username", loginUser.username(userRepository))
                         .put("csrf", token.csrfToken())
                         .toPrettyString()
         );

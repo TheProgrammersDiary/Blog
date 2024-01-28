@@ -41,7 +41,7 @@
         <dependency>
             <groupId>com.evalvis</groupId>
             <artifactId>security</artifactId>
-            <version>2.3.0</version>
+            <version>2.4.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -187,6 +187,7 @@
                         <exclude>com/evalvis/blog/BlogApplication.class</exclude>
                         <exclude>com/evalvis/blog/MongoConfig.class</exclude>
                         <exclude>com/evalvis/blog/logging/HttpLoggingFilter.class</exclude>
+                        <exclude>com/evalvis/blog/logging/ControllerException.class</exclude>
                         <exclude>com/evalvis/blog/comment/CommentRepository$CommentEntry.class</exclude>
                         <exclude>com/evalvis/blog/user/UserRepository$UserEntry.class</exclude>
                         <exclude>com/evalvis/blog/logging/BadRequestException.class</exclude>

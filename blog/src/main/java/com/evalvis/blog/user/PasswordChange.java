@@ -11,16 +11,16 @@ public class PasswordChange {
         this.newPassword = newPassword;
     }
 
-    public void changePassword(UserRepository repository, String username, PasswordEncoder encoder) {
-        if(repository.findPasswordByUsername(username).isEmpty()) {
+    public void changePassword(UserRepository repository, String email, PasswordEncoder encoder) {
+        if(repository.findPasswordByEmail(email).isEmpty()) {
             throw new RuntimeException("Can't change password when using OAuth!");
         }
-        if(!encoder.matches(currentPassword, repository.findPasswordByUsername(username).get())) {
+        if(!encoder.matches(currentPassword, repository.findPasswordByEmail(email).get())) {
             throw new RuntimeException("Old and new passwords do not match!");
         }
         repository.save(
                 UserRepository.UserEntry.withChangedPassword(
-                        encoder.encode(newPassword), repository.findByUsername(username).get()
+                        encoder.encode(newPassword), repository.findByEmail(email).get()
                 )
         );
     }

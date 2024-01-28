@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(classes = ITUserTestConfig.class)
 @ActiveProfiles("it")
 @ExtendWith({SnapshotExtension.class})
-public class ITUserTests {
+public class ITSignUpUserTests {
     private Expect expect;
     private final UserController controller;
     private final UserRepository userRepository;
@@ -45,7 +45,7 @@ public class ITUserTests {
     private final UserMother mother;
 
     @Autowired
-    public ITUserTests(
+    public ITSignUpUserTests(
             UserController controller, UserRepository userRepository, PasswordResetRepository passwordResetRepository,
             BlacklistedJwtTokenRepository blacklistedJwtTokenRepository,
             OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler
@@ -66,9 +66,9 @@ public class ITUserTests {
 
     @Test
     void signsUp() {
-        mother.signUp("tester");
+        mother.signUp("tester@gmail.com", "tester", "test");
 
-        assertTrue(userRepository.findByUsername("tester").isPresent());
+        assertTrue(userRepository.findByEmail("tester@gmail.com").isPresent());
     }
 
     @Test
@@ -104,10 +104,10 @@ public class ITUserTests {
 
     @Test
     void logsInViaOAuth2MultipleTimes() throws IOException {
-        String username = UUID.randomUUID().toString();
+        String email = UUID.randomUUID().toString();
 
-        loginViaOauth2(username);
-        loginViaOauth2(username);
+        loginViaOauth2(email);
+        loginViaOauth2(email);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
@@ -117,7 +117,7 @@ public class ITUserTests {
     @Test
     void changesPassword() {
         String jwt = mother
-                .loginNewUser("abc", "abc@gmail.com", "currentPassword")
+                .loginNewUser("abc@gmail.com", "abc", "currentPassword")
                 .getHeader(HttpHeaders.SET_COOKIE)
                 .split("jwt=")[1]
                 .split(";")[0];
@@ -125,7 +125,7 @@ public class ITUserTests {
         controller.changePassword(new PasswordChange("currentPassword", "newPassword"));
 
         controller.logout(new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)));
-        mother.login("abc", "abc@gmail.com", "newPassword");
+        mother.login("abc@gmail.com", "newPassword");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
         assertTrue(authentication.isAuthenticated());
@@ -133,7 +133,7 @@ public class ITUserTests {
 
     @Test
     void failsToChangePasswordWhenOldAndNewPasswordsMismatch() {
-        mother.loginNewUser("abc", "abc@gmail.com", "currentPassword");
+        mother.loginNewUser("abc@gmail.com", "abc", "currentPassword");
 
         assertThrows(
                 RuntimeException.class,
@@ -159,7 +159,7 @@ public class ITUserTests {
 
     @Test
     void resetsPassword() throws IOException {
-        mother.loginNewUser("testUser", "email@gmail.com", "forgottenPassword");
+        mother.loginNewUser("email@gmail.com", "testUser", "forgottenPassword");
         passwordResetRepository.save(
                 new PasswordResetRepository.PasswordResetEntry(
                         new BCryptPasswordEncoder().encode("token"), "email@gmail.com"
@@ -169,7 +169,7 @@ public class ITUserTests {
         controller.resetPassword(new PasswordReset("email@gmail.com", "token", "newPassword"));
 
         controller.login(
-                new User("testUser", "email@gmail.com", "newPassword"),
+                new LoginUser("email@gmail.com", "newPassword"),
                 new FakeHttpServletResponse()
         );
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -181,7 +181,7 @@ public class ITUserTests {
     @NullSource
     @ValueSource(strings = {"", "wrongToken"})
     void failsToResetPasswordIfTokenIsInvalid(String wrongToken) throws IOException {
-        mother.loginNewUser("tester", "testeremail@gmail.com", "forgottenPassword");
+        mother.loginNewUser("testeremail@gmail.com", "tester", "forgottenPassword");
         passwordResetRepository.save(
                 new PasswordResetRepository.PasswordResetEntry(
                         new BCryptPasswordEncoder().encode("token"), "testeremail@gmail.com"
@@ -199,7 +199,7 @@ public class ITUserTests {
         assertThrows(
                 BadCredentialsException.class,
                 () -> controller.login(
-                        new User("tester", "testeremail@gmail.com", "newPassword"),
+                        new LoginUser("testeremail@gmail.com", "newPassword"),
                         new FakeHttpServletResponse()
                 )
         );
@@ -208,7 +208,7 @@ public class ITUserTests {
 
     @Test
     void requestsPasswordResetOnLocallyRegisteredUser() {
-        mother.loginNewUser("localUser", "localuser@gmail.com", "notImportant");
+        mother.loginNewUser("localuser@gmail.com", "localUser", "notImportant");
 
         controller.requestPasswordReset("localuser@gmail.com");
 
@@ -217,23 +217,19 @@ public class ITUserTests {
 
     @Test
     void failsToRequestPasswordResetOnOauthUser() throws IOException {
-        loginViaOauth2("oauthuser", "oauthuser@gmail.com");
+        loginViaOauth2("oauthuser@gmail.com");
 
         controller.requestPasswordReset("oauthuser@gmail.com");
 
         assertFalse(passwordResetRepository.existsByEmail("oauthuser@gmail.com"));
     }
 
-    private void loginViaOauth2(String username) throws IOException {
-        loginViaOauth2(username, UUID.randomUUID().toString());
-    }
-
-    private void loginViaOauth2(String username, String email) throws IOException {
+    private void loginViaOauth2(String email) throws IOException {
         DefaultOidcUser user = new DefaultOidcUser(
                 Collections.emptyList(),
                 new OidcIdToken(
                         "fakeToken", Instant.now(), Instant.now().plus(Duration.ofMinutes(10)),
-                        Map.of("email", email, "name", username, "sub", username)
+                        Map.of("email", email, "name", UUID.randomUUID().toString(), "sub", email)
                 )
         );
         oAuth2AuthorizationSuccessHandler.onAuthenticationSuccess(
@@ -245,12 +241,12 @@ public class ITUserTests {
 
     @Test
     void FailsToLoginViaOAuth2WithUnsupportedProvider() {
-        String username = UUID.randomUUID().toString();
+        String email = UUID.randomUUID().toString();
         DefaultOidcUser user = new DefaultOidcUser(
                 Collections.emptyList(),
                 new OidcIdToken(
                         "fakeToken", Instant.now(), Instant.now().plus(Duration.ofMinutes(10)),
-                        Map.of("email", UUID.randomUUID().toString(), "name", username, "sub", username)
+                        Map.of("email", email, "name", UUID.randomUUID().toString(), "sub", email)
                 )
         );
 
@@ -266,26 +262,26 @@ public class ITUserTests {
 
     @Test
     void failsToLoginNonExistingUser() {
-        mother.signUp("tester1", "tester1@gmail.com", "test");
+        mother.signUp("tester1@gmail.com", "tester1", "test");
 
         assertThrows(
                 BadCredentialsException.class,
-                () -> mother.login("non-existing-user", "tester1@gmail.com", "test")
+                () -> mother.login("nonexisting@gmail.com","test")
         );
     }
 
     @Test
     void failsToLoginWithWrongPassword() {
-        mother.signUp("tester2", "tester2@gmail.com", "test");
+        mother.signUp("tester2@gmail.com", "tester2", "test");
 
         assertThrows(
                 BadCredentialsException.class,
-                () -> mother.login("tester2", "tester2@gmail.com", "wrong-password")
+                () -> mother.login("tester2@gmail.com", "wrong-password")
         );
     }
 
     @Test
-    void throwsErrorIfUserCallsLogoutWithoutJwt() {
+    void throwsErrorIfUserLogsOutWithoutJwt() {
         assertThrows(RuntimeException.class, () -> controller.logout(new FakeHttpServletRequest(Map.of())));
     }
 }
