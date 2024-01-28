@@ -1,5 +1,7 @@
 package com.evalvis.blog.user;
 
+import com.evalvis.blog.Email;
+import com.evalvis.blog.FakeSmtpEmail;
 import com.evalvis.blog.SecurityConfig;
 import com.evalvis.blog.logging.HttpLoggingFilter;
 import com.evalvis.security.BlacklistedJwtTokenRepository;
@@ -19,6 +21,16 @@ public class ITUserTestConfig {
     @Bean
     public UserRepository fakeUserRepository() {
         return new FakeUserRepository();
+    }
+
+    @Bean
+    public PasswordResetRepository fakePasswordResetRepository() {
+        return new FakePasswordResetRepository();
+    }
+
+    @Bean
+    public Email fakeSmtpEmail() {
+        return new FakeSmtpEmail();
     }
 
     @Bean

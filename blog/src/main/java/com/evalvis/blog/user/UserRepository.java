@@ -18,6 +18,7 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
     Optional<UserEntry> findByUsername(String username);
     @Query("SELECT user.password FROM blog_user user WHERE username = :username")
     Optional<String> findPasswordByUsername(String username);
+    Optional<UserEntry> findByEmail(String email);
     boolean existsByEmail(String email);
     @Entity(name="blog_user")
     @JsonPropertyOrder(alphabetic=true)

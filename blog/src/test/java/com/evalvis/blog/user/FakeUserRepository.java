@@ -23,6 +23,11 @@ public class FakeUserRepository implements UserRepository {
     }
 
     @Override
+    public Optional<UserEntry> findByEmail(String email) {
+        return entries.values().stream().filter(user -> user.getEmail().equals(email)).findFirst();
+    }
+
+    @Override
     public boolean existsByEmail(String email) {
         return entries.values().stream().anyMatch(user -> user.getEmail().equals(email));
     }

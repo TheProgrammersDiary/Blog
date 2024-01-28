@@ -20,7 +20,6 @@ public interface CommentRepository
     @Document("comment")
     @JsonPropertyOrder(alphabetic=true)
     class CommentEntry {
-
         @Id
         @Indexed(unique = true)
         private String id;

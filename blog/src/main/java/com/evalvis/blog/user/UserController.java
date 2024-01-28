@@ -1,5 +1,6 @@
 package com.evalvis.blog.user;
 
+import com.evalvis.blog.Email;
 import com.evalvis.security.BlacklistedJwtTokenRepository;
 import com.evalvis.security.JwtKey;
 import com.evalvis.security.JwtToken;
@@ -7,6 +8,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -24,21 +26,27 @@ import java.time.Duration;
 @RequestMapping("users")
 public class UserController {
     private final UserRepository userRepository;
+    private final PasswordResetRepository passwordResetRepository;
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
     private final BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
     private final JwtKey key;
+    private final Email emailSender;
+    @Value("${blog.frontend-url}")
+    private String frontendUrl;
 
     public @Autowired UserController(
-            UserRepository userRepository, PasswordEncoder encoder,
+            UserRepository userRepository, PasswordResetRepository passwordResetRepository, PasswordEncoder encoder,
             AuthenticationManager authManager, BlacklistedJwtTokenRepository blacklistedJwtTokenRepository,
-            JwtKey key
+            JwtKey key, Email emailSender
     ) {
         this.userRepository = userRepository;
+        this.passwordResetRepository = passwordResetRepository;
         this.encoder = encoder;
         this.authManager = authManager;
         this.blacklistedJwtTokenRepository = blacklistedJwtTokenRepository;
         this.key = key;
+        this.emailSender = emailSender;
     }
 
     @PostMapping("/signup")
@@ -71,10 +79,21 @@ public class UserController {
     }
 
     @PatchMapping("/change-password")
-    void changePassword(@RequestBody UserPassword userPassword) {
-        userPassword.changePassword(
+    void changePassword(@RequestBody PasswordChange passwordChange) {
+        passwordChange.changePassword(
                 userRepository, SecurityContextHolder.getContext().getAuthentication().getName(), encoder
         );
+    }
+
+    @PostMapping("/request-password-reset")
+    void requestPasswordReset(@RequestBody String email) {
+        new PasswordResetRequest(email).request(passwordResetRepository, userRepository, emailSender, encoder);
+    }
+
+    @PatchMapping("/reset-password")
+    ResponseEntity<String> resetPassword(@RequestBody PasswordReset passwordReset) {
+        passwordReset.reset(passwordResetRepository, encoder, userRepository, emailSender);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/logout")
@@ -88,5 +107,4 @@ public class UserController {
                         }
                 );
     }
-
 }

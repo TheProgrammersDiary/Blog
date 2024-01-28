@@ -8,6 +8,22 @@ server:
     key-alias: blog
     key-password: ${ssl_blog_passphrase}
 spring:
+  mail:
+    test-connection: true
+    host: smtp.gmail.com
+    port: 587
+    username: ${smtp_email}
+    password: ${smtp_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          ssl:
+            trust: smtp.gmail.com
+        debug: false
   data:
     redis:
       host: redis

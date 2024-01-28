@@ -66,7 +66,8 @@ public class SecurityConfig {
                                 .requestMatchers(
                                         "/users/signup", "/users/login",
                                         "/actuator/prometheus",
-                                        "/comments/list-comments/{postId}", "/comments/create"
+                                        "/comments/list-comments/{postId}", "/comments/create",
+                                        "/users/request-password-reset", "/users/reset-password"
                                 )
                                 .permitAll()
                                 .anyRequest()

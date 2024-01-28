@@ -2,11 +2,11 @@ package com.evalvis.blog.user;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-public class UserPassword {
+public class PasswordChange {
     private final String currentPassword;
     private final String newPassword;
 
-    public UserPassword(String currentPassword, String newPassword) {
+    public PasswordChange(String currentPassword, String newPassword) {
         this.currentPassword = currentPassword;
         this.newPassword = newPassword;
     }

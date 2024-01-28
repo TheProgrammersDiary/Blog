@@ -17,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
@@ -36,21 +37,22 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith({SnapshotExtension.class})
 public class ITUserTests {
     private Expect expect;
-
     private final UserController controller;
-    private final UserRepository repository;
+    private final UserRepository userRepository;
+    private final PasswordResetRepository passwordResetRepository;
     private final BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
     private final OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler;
     private final UserMother mother;
 
     @Autowired
     public ITUserTests(
-            UserController controller, UserRepository repository,
+            UserController controller, UserRepository userRepository, PasswordResetRepository passwordResetRepository,
             BlacklistedJwtTokenRepository blacklistedJwtTokenRepository,
             OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler
     ) {
         this.controller = controller;
-        this.repository = repository;
+        this.userRepository = userRepository;
+        this.passwordResetRepository = passwordResetRepository;
         this.blacklistedJwtTokenRepository = blacklistedJwtTokenRepository;
         this.oAuth2AuthorizationSuccessHandler = oAuth2AuthorizationSuccessHandler;
         this.mother = new UserMother(this.controller);
@@ -66,7 +68,7 @@ public class ITUserTests {
     void signsUp() {
         mother.signUp("tester");
 
-        assertTrue(repository.findByUsername("tester").isPresent());
+        assertTrue(userRepository.findByUsername("tester").isPresent());
     }
 
     @Test
@@ -120,7 +122,7 @@ public class ITUserTests {
                 .split("jwt=")[1]
                 .split(";")[0];
 
-        controller.changePassword(new UserPassword("currentPassword", "newPassword"));
+        controller.changePassword(new PasswordChange("currentPassword", "newPassword"));
 
         controller.logout(new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)));
         mother.login("abc", "abc@gmail.com", "newPassword");
@@ -136,7 +138,7 @@ public class ITUserTests {
         assertThrows(
                 RuntimeException.class,
                 () -> controller.changePassword(
-                        new UserPassword("wrongPassword", "newPassword")
+                        new PasswordChange("wrongPassword", "newPassword")
                 )
         );
     }
@@ -150,17 +152,88 @@ public class ITUserTests {
         assertThrows(
                 RuntimeException.class,
                 () -> controller.changePassword(
-                        new UserPassword(password, "newPassword")
+                        new PasswordChange(password, "newPassword")
                 )
         );
     }
 
+    @Test
+    void resetsPassword() throws IOException {
+        mother.loginNewUser("testUser", "email@gmail.com", "forgottenPassword");
+        passwordResetRepository.save(
+                new PasswordResetRepository.PasswordResetEntry(
+                        new BCryptPasswordEncoder().encode("token"), "email@gmail.com"
+                )
+        );
+
+        controller.resetPassword(new PasswordReset("email@gmail.com", "token", "newPassword"));
+
+        controller.login(
+                new User("testUser", "email@gmail.com", "newPassword"),
+                new FakeHttpServletResponse()
+        );
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        assertNotNull(authentication);
+        assertTrue(authentication.isAuthenticated());
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = {"", "wrongToken"})
+    void failsToResetPasswordIfTokenIsInvalid(String wrongToken) throws IOException {
+        mother.loginNewUser("tester", "testeremail@gmail.com", "forgottenPassword");
+        passwordResetRepository.save(
+                new PasswordResetRepository.PasswordResetEntry(
+                        new BCryptPasswordEncoder().encode("token"), "testeremail@gmail.com"
+                )
+        );
+
+        assertThrows(
+                RuntimeException.class,
+                () -> controller.resetPassword(
+                        new PasswordReset("testeremail@gmail.com", wrongToken, "newPassword")
+                )
+        );
+        SecurityContextHolder.getContext().setAuthentication(null);
+        SecurityContextHolder.clearContext();
+        assertThrows(
+                BadCredentialsException.class,
+                () -> controller.login(
+                        new User("tester", "testeremail@gmail.com", "newPassword"),
+                        new FakeHttpServletResponse()
+                )
+        );
+        assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    @Test
+    void requestsPasswordResetOnLocallyRegisteredUser() {
+        mother.loginNewUser("localUser", "localuser@gmail.com", "notImportant");
+
+        controller.requestPasswordReset("localuser@gmail.com");
+
+        assertTrue(passwordResetRepository.existsByEmail("localuser@gmail.com"));
+    }
+
+    @Test
+    void failsToRequestPasswordResetOnOauthUser() throws IOException {
+        loginViaOauth2("oauthuser", "oauthuser@gmail.com");
+
+        controller.requestPasswordReset("oauthuser@gmail.com");
+
+        assertFalse(passwordResetRepository.existsByEmail("oauthuser@gmail.com"));
+    }
+
     private void loginViaOauth2(String username) throws IOException {
+        loginViaOauth2(username, UUID.randomUUID().toString());
+    }
+
+    private void loginViaOauth2(String username, String email) throws IOException {
         DefaultOidcUser user = new DefaultOidcUser(
                 Collections.emptyList(),
                 new OidcIdToken(
                         "fakeToken", Instant.now(), Instant.now().plus(Duration.ofMinutes(10)),
-                        Map.of("email", UUID.randomUUID().toString(), "name", username, "sub", username)
+                        Map.of("email", email, "name", username, "sub", username)
                 )
         );
         oAuth2AuthorizationSuccessHandler.onAuthenticationSuccess(
