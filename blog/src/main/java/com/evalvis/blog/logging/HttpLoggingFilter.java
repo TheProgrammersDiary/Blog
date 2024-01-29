@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -25,6 +26,10 @@ import java.util.Enumeration;
 @WebFilter(filterName = "HttpLoggingFilter")
 public final class HttpLoggingFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(HttpLoggingFilter.class);
+
+    @Value("${blog.http-masking-turned-on}")
+    private boolean isHttpMaskingOn;
+
     @Override
     protected void doFilterInternal(
             @NonNull HttpServletRequest request, @NonNull HttpServletResponse response,
@@ -44,15 +49,12 @@ public final class HttpLoggingFilter extends OncePerRequestFilter {
         }
         long timeTaken = System.currentTimeMillis() - startTime;
         ObjectNode root = requestLog(request, requestWrapper);
-        String responseBody = new String(
-                responseWrapper.getContentAsByteArray(), response.getCharacterEncoding()
-        );
+        String responseBody = new String(responseWrapper.getContentAsByteArray(), response.getCharacterEncoding());
         ObjectNode responseNode = root.withObject("/response");
         responseNode
                 .put("status", response.getStatus())
-                .put("body", responseBody)
+                .put("body", isHttpMaskingOn ? "[hidden]" : responseBody)
                 .put("time taken (ms)", timeTaken);
-
         appendResponseHeaders(responseNode, response);
         log.info(root.toPrettyString());
         responseWrapper.copyBodyToResponse();
@@ -68,7 +70,7 @@ public final class HttpLoggingFilter extends OncePerRequestFilter {
         ObjectNode requestNode = root.withObject("/request");
         requestNode.put("URI", request.getRequestURI());
         requestNode.put("method", request.getMethod());
-        requestNode.put("body", requestBody);
+        requestNode.put("body", isHttpMaskingOn ? "[hidden]" : requestBody);
         appendRequestHeaders(requestNode, request);
         return root;
     }
@@ -80,7 +82,7 @@ public final class HttpLoggingFilter extends OncePerRequestFilter {
             String headerName = headerNames.nextElement();
             ObjectNode header = new ObjectMapper()
                     .createObjectNode()
-                    .put(headerName, request.getHeader(headerName));
+                    .put(headerName, isHttpMaskingOn ? "[hidden]": request.getHeader(headerName));
             headers.add(header);
         }
     }
@@ -91,7 +93,7 @@ public final class HttpLoggingFilter extends OncePerRequestFilter {
         for(String headerName : headerNames) {
             ObjectNode header = new ObjectMapper()
                     .createObjectNode()
-                    .put(headerName, response.getHeader(headerName));
+                    .put(headerName, isHttpMaskingOn ? "[hidden]": response.getHeader(headerName));
             headers.add(header);
         }
     }

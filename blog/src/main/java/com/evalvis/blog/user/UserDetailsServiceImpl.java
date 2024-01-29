@@ -17,7 +17,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         UserRepository.UserEntry user = userRepository
                 .findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User Not Found with email: " + email));
+                .orElseThrow(() -> new UsernameNotFoundException("User not Found with email: " + email));
         return new com.evalvis.security.User(user.getEmail(), user.getPassword());
     }
 }
