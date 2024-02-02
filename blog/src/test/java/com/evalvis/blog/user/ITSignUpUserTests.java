@@ -88,7 +88,10 @@ public class ITSignUpUserTests {
                 .split("jwt=")[1]
                 .split(";")[0];
 
-        controller.logout(new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)));
+        controller.logout(
+                new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)),
+                new FakeHttpServletResponse()
+        );
 
         assertTrue(blacklistedJwtTokenRepository.isTokenBlacklisted(jwt));
     }
@@ -124,7 +127,10 @@ public class ITSignUpUserTests {
 
         controller.changePassword(new PasswordChange("currentPassword", "newPassword"));
 
-        controller.logout(new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)));
+        controller.logout(
+                new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)),
+                new FakeHttpServletResponse()
+        );
         mother.login("abc@gmail.com", "newPassword");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
@@ -282,6 +288,11 @@ public class ITSignUpUserTests {
 
     @Test
     void throwsErrorIfUserLogsOutWithoutJwt() {
-        assertThrows(RuntimeException.class, () -> controller.logout(new FakeHttpServletRequest(Map.of())));
+        assertThrows(
+                RuntimeException.class,
+                () -> controller.logout(
+                        new FakeHttpServletRequest(Map.of()), new FakeHttpServletResponse()
+                )
+        );
     }
 }

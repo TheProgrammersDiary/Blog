@@ -63,18 +63,29 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
         JwtToken token = JwtToken.create(authToken, key.value(), blacklistedJwtTokenRepository);
-        ResponseCookie cookie = ResponseCookie.from("jwt", token.value())
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token.value())
                 .httpOnly(true)
                 .secure(true)
                 .maxAge(Duration.ofMinutes(10))
                 .path("/")
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-        response.sendRedirect(
-                frontendUrl + "/auth_login_success" +
-                        "?username=" + URLEncoder.encode(username, StandardCharsets.UTF_8) +
-                        "&csrf="
-                        + URLEncoder.encode(token.csrfToken(), StandardCharsets.UTF_8)
-        );
+        ResponseCookie usernameCookie = ResponseCookie.from(
+                "username", URLEncoder.encode(username, StandardCharsets.UTF_8)
+                )
+                .httpOnly(false)
+                .secure(true)
+                .maxAge(Duration.ofMinutes(2))
+                .path("/")
+                .build();
+        ResponseCookie csrfCookie = ResponseCookie.from("csrf", token.csrfToken())
+                .httpOnly(false)
+                .secure(true)
+                .maxAge(Duration.ofMinutes(2))
+                .path("/")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, usernameCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, csrfCookie.toString());
+        response.sendRedirect(frontendUrl + "/auth_login_success");
     }
 }

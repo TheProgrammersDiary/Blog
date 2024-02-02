@@ -90,7 +90,7 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    void logout(HttpServletRequest request) {
+    void logout(HttpServletRequest request, HttpServletResponse response) {
         JwtToken
                 .existing(request, key.value(), blacklistedJwtTokenRepository)
                 .ifPresentOrElse(
@@ -99,5 +99,12 @@ public class UserController {
                             throw new RuntimeException("Possible security issue. Logout is missing jwt token.");
                         }
                 );
+        ResponseCookie deleteCookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(true)
+                .maxAge(0)
+                .path("/")
+                .build();
+        response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
     }
 }
