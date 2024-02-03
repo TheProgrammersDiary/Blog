@@ -1,28 +1,29 @@
 package com.evalvis.blog.user;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class FakePasswordResetRepository implements PasswordResetRepository {
-    private final Map<String, PasswordResetEntry> entries = new HashMap<>();
+    private final Map<String, List<PasswordResetEntry>> entries = new HashMap<>();
     @Override
     public Optional<PasswordResetEntry> findFirstByEmailOrderByDateCreatedDesc(String email) {
-        return entries.values()
+        return entries
+                .get(email)
                 .stream()
-                .filter(user -> user.email.equals(email))
                 .max(Comparator.comparing(user -> user.dateCreated));
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return entries.values().stream().anyMatch(user -> user.email.equals(email));
+        return entries.get(email) != null && entries.get(email).size() > 0;
     }
 
     @Override
     public <S extends PasswordResetEntry> S save(S entry) {
-        entries.put(entry.email, entry);
+        entries.merge(entry.email, new ArrayList<>(List.of(entry)), (oldValue, newValue) -> {
+            oldValue.addAll(newValue);
+            return oldValue;
+        });
         return entry;
     }
 
@@ -33,7 +34,7 @@ public class FakePasswordResetRepository implements PasswordResetRepository {
 
     @Override
     public Optional<PasswordResetEntry> findById(String id) {
-        return Optional.ofNullable(entries.get(id));
+        throw new UnsupportedOperationException("Not implemented.");
     }
 
     @Override
@@ -43,7 +44,7 @@ public class FakePasswordResetRepository implements PasswordResetRepository {
 
     @Override
     public Iterable<PasswordResetEntry> findAll() {
-        return entries.values();
+        return entries.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
     }
 
     @Override
