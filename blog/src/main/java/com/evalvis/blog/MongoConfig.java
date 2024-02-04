@@ -12,7 +12,6 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 
 @Configuration
 public class MongoConfig {
-
     @Autowired
     private Environment env;
 

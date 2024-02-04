@@ -1,12 +1,17 @@
 package com.evalvis.blog.comment;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import jakarta.persistence.Column;
+import jakarta.persistence.Temporal;
+import jakarta.persistence.TemporalType;
+import org.hibernate.annotations.CreationTimestamp;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -23,12 +28,17 @@ public interface CommentRepository
         @Id
         @Indexed(unique = true)
         private String id;
+        @CreationTimestamp
+        @Temporal(TemporalType.TIMESTAMP)
+        @Column(nullable = false)
+        public Date dateCreated;
         private String author;
         private String content;
         private String postEntryId;
 
         public CommentEntry(String author, String content, String postEntryId) {
             id = UUID.randomUUID().toString();
+            this.dateCreated = new Date();
             this.author = author;
             this.content = content;
             this.postEntryId = postEntryId;
@@ -64,16 +74,6 @@ public interface CommentRepository
         @Override
         public int hashCode() {
             return Objects.hash(id);
-        }
-
-        @Override
-        public String toString() {
-            return "CommentEntry{" +
-                    "id='" + id + '\'' +
-                    ", author='" + author + '\'' +
-                    ", content='" + content + '\'' +
-                    ", postEntryId='" + postEntryId + '\'' +
-                    '}';
         }
     }
 }

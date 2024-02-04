@@ -1,7 +1,6 @@
 package com.evalvis.blog.comment;
 
 public final class Comment {
-
     private final String author;
     private final String content;
     private final String postId;

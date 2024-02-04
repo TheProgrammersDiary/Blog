@@ -28,7 +28,7 @@ public class CommentTests {
     void createsComment() {
         CommentRepository.CommentEntry comment = mother.create();
 
-        expect.toMatchSnapshot(jsonWithMaskedProperties(comment, "id"));
+        expect.toMatchSnapshot(jsonWithMaskedProperties(comment, "id", "dateCreated"));
     }
 
     private <T> ObjectNode jsonWithMaskedProperties(
