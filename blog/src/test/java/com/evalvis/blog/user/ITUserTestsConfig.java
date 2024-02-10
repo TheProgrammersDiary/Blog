@@ -4,7 +4,6 @@ import com.evalvis.blog.Email;
 import com.evalvis.blog.FakeSmtpEmail;
 import com.evalvis.blog.SecurityConfig;
 import com.evalvis.blog.logging.HttpLoggingFilter;
-import com.evalvis.security.BlacklistedJwtTokenRepository;
 import com.evalvis.security.JwtKey;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
@@ -17,7 +16,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 @Import(value = {
         UserController.class, SecurityConfig.class, UserDetailsServiceImpl.class, HttpLoggingFilter.class, JwtKey.class
 })
-public class ITUserTestConfig {
+public class ITUserTestsConfig {
     @Bean
     public UserRepository fakeUserRepository() {
         return new FakeUserRepository();
@@ -36,11 +35,5 @@ public class ITUserTestConfig {
     @Bean
     public ClientRegistrationRepository fakeClientRegistrationRepository() {
         return new FakeClientRegistrationRepository();
-    }
-
-    @Bean
-    @Primary
-    public BlacklistedJwtTokenRepository fakeBlacklistedJwtTokenRepository() {
-        return new FakeBlacklistedJwtTokenRepository();
     }
 }

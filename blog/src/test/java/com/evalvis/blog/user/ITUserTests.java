@@ -4,7 +4,10 @@ import au.com.origin.snapshots.Expect;
 import au.com.origin.snapshots.junit5.SnapshotExtension;
 import com.evalvis.blog.FakeHttpServletRequest;
 import com.evalvis.blog.FakeHttpServletResponse;
-import com.evalvis.security.BlacklistedJwtTokenRepository;
+import com.evalvis.security.JwtKey;
+import com.evalvis.security.JwtRefreshToken;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +16,6 @@ import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -32,36 +34,34 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = ITUserTestConfig.class)
+@SpringBootTest(classes = ITUserTestsConfig.class)
 @ActiveProfiles("it")
 @ExtendWith({SnapshotExtension.class})
-public class ITSignUpUserTests {
+public class ITUserTests {
     private Expect expect;
     private final UserController controller;
     private final UserRepository userRepository;
     private final PasswordResetRepository passwordResetRepository;
-    private final BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
     private final OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler;
+    private final JwtKey jwtKey;
     private final UserMother mother;
 
     @Autowired
-    public ITSignUpUserTests(
+    public ITUserTests(
             UserController controller, UserRepository userRepository, PasswordResetRepository passwordResetRepository,
-            BlacklistedJwtTokenRepository blacklistedJwtTokenRepository,
-            OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler
+            OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler, JwtKey jwtKey
     ) {
         this.controller = controller;
         this.userRepository = userRepository;
         this.passwordResetRepository = passwordResetRepository;
-        this.blacklistedJwtTokenRepository = blacklistedJwtTokenRepository;
         this.oAuth2AuthorizationSuccessHandler = oAuth2AuthorizationSuccessHandler;
+        this.jwtKey = jwtKey;
         this.mother = new UserMother(this.controller);
     }
 
     @AfterEach
     void cleanUp() {
-        SecurityContextHolder.getContext().setAuthentication(null);
-        SecurityContextHolder.clearContext();
+        logout();
     }
 
     @Test
@@ -78,22 +78,6 @@ public class ITSignUpUserTests {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
         assertTrue(authentication.isAuthenticated());
-    }
-
-    @Test
-    void logsOut() {
-        String jwt = mother
-                .loginNewUser()
-                .getHeader(HttpHeaders.SET_COOKIE)
-                .split("jwt=")[1]
-                .split(";")[0];
-
-        controller.logout(
-                new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)),
-                new FakeHttpServletResponse()
-        );
-
-        assertTrue(blacklistedJwtTokenRepository.isTokenBlacklisted(jwt));
     }
 
     @Test
@@ -118,19 +102,41 @@ public class ITSignUpUserTests {
     }
 
     @Test
+    void refreshesToken() {
+        JwtRefreshToken refreshToken = JwtRefreshToken.create(
+                new FakeAuthentication("user@gmail.com", null), jwtKey.value()
+        );
+
+        String jwtShortLivedToken = assertDoesNotThrow(
+                () -> controller.refreshJwt(
+                        new FakeHttpServletRequest(
+                                new Cookie[]{
+                                        new Cookie("jwt", refreshToken.value())
+                                }
+                        )
+                ).getBody()
+        );
+
+        assertNotNull(jwtShortLivedToken);
+    }
+
+    @Test
+    void logsOut() {
+        mother.loginNewUser();
+        HttpServletResponse response = new FakeHttpServletResponse();
+
+        controller.logout(response);
+
+        assertTrue(response.getHeader("Set-Cookie").contains("jwt=; Path=/; Max-Age=0;"));
+    }
+
+    @Test
     void changesPassword() {
-        String jwt = mother
-                .loginNewUser("abc@gmail.com", "abc", "currentPassword")
-                .getHeader(HttpHeaders.SET_COOKIE)
-                .split("jwt=")[1]
-                .split(";")[0];
+        mother.loginNewUser("abc@gmail.com", "abc", "currentPassword");
 
         controller.changePassword(new PasswordChange("currentPassword", "newPassword"));
 
-        controller.logout(
-                new FakeHttpServletRequest(Map.of("Authorization", "Bearer " + jwt)),
-                new FakeHttpServletResponse()
-        );
+        logout();
         mother.login("abc@gmail.com", "newPassword");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
@@ -286,13 +292,8 @@ public class ITSignUpUserTests {
         );
     }
 
-    @Test
-    void throwsErrorIfUserLogsOutWithoutJwt() {
-        assertThrows(
-                RuntimeException.class,
-                () -> controller.logout(
-                        new FakeHttpServletRequest(Map.of()), new FakeHttpServletResponse()
-                )
-        );
+    private void logout() {
+        SecurityContextHolder.getContext().setAuthentication(null);
+        SecurityContextHolder.clearContext();
     }
 }

@@ -1,8 +1,8 @@
 package com.evalvis.blog.user;
 
-import com.evalvis.security.BlacklistedJwtTokenRepository;
 import com.evalvis.security.JwtKey;
-import com.evalvis.security.JwtToken;
+import com.evalvis.security.JwtRefreshToken;
+import com.evalvis.security.JwtShortLivedToken;
 import com.evalvis.security.User;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,16 +27,14 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessHandler {
+    private static final Logger log = LoggerFactory.getLogger(OAuth2AuthorizationSuccessHandler.class);
+
     @Autowired
     private UserRepository userRepository;
-    @Autowired
-    private BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
     @Autowired
     private JwtKey key;
     @Value("${blog.frontend-url}")
     private String frontendUrl;
-
-    private static final Logger log = LoggerFactory.getLogger(OAuth2AuthorizationSuccessHandler.class);
 
     @Override
     public void onAuthenticationSuccess(
@@ -62,11 +60,23 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         );
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
-        JwtToken token = JwtToken.create(authToken, key.value(), blacklistedJwtTokenRepository);
-        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token.value())
+        JwtRefreshToken refreshToken = JwtRefreshToken.create(authToken, key.value());
+        ResponseCookie jwtRefreshCookie = ResponseCookie
+                .from("jwt", refreshToken.value())
                 .httpOnly(true)
                 .secure(true)
-                .maxAge(Duration.ofMinutes(10))
+                .maxAge(Duration.ofDays(14))
+                .path("/")
+                .build();
+        ResponseCookie jwtShortLivedCookie = ResponseCookie.from(
+                        "jwtShortLived",
+                        URLEncoder.encode(
+                                JwtShortLivedToken.create(refreshToken, key.value()).value(), StandardCharsets.UTF_8
+                        )
+                )
+                .httpOnly(false)
+                .secure(true)
+                .maxAge(Duration.ofMinutes(2))
                 .path("/")
                 .build();
         ResponseCookie usernameCookie = ResponseCookie.from(
@@ -77,15 +87,9 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
                 .maxAge(Duration.ofMinutes(2))
                 .path("/")
                 .build();
-        ResponseCookie csrfCookie = ResponseCookie.from("csrf", token.csrfToken())
-                .httpOnly(false)
-                .secure(true)
-                .maxAge(Duration.ofMinutes(2))
-                .path("/")
-                .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, jwtCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, jwtRefreshCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, jwtShortLivedCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, usernameCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, csrfCookie.toString());
         response.sendRedirect(frontendUrl + "/auth_login_success");
     }
 }

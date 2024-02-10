@@ -26,10 +26,6 @@ spring:
             trust: smtp.gmail.com
         debug: false
   data:
-    redis:
-      host: redis
-      port: 6379
-      cacheName: jwtBlacklist
     mongodb:
       uri: mongodb://mongodb:27017
       database: blog

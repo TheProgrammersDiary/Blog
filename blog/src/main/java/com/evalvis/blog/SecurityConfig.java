@@ -67,7 +67,7 @@ public class SecurityConfig {
                                         "/users/signup", "/users/login",
                                         "/actuator/prometheus",
                                         "/comments/list-comments/{postId}", "/comments/create",
-                                        "/users/request-password-reset", "/users/reset-password"
+                                        "/users/request-password-reset", "/users/reset-password", "/users/refresh"
                                 )
                                 .permitAll()
                                 .anyRequest()
@@ -109,7 +109,7 @@ public class SecurityConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowedOrigins(Collections.singletonList(frontendUrl));
         config.setAllowedMethods(List.of("GET", "POST", "OPTIONS", "PATCH"));
-        config.setAllowedHeaders(List.of("Origin", "Content-Type", "Accept", "Authorization", "X-CSRF-TOKEN"));
+        config.setAllowedHeaders(List.of("Origin", "Content-Type", "Accept", "Authorization"));
         config.setAllowCredentials(true);
         source.registerCorsConfiguration("/**", config);
         return new CorsFilter(source);

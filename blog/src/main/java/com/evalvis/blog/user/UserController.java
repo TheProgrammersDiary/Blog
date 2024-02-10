@@ -1,9 +1,10 @@
 package com.evalvis.blog.user;
 
 import com.evalvis.blog.Email;
-import com.evalvis.security.BlacklistedJwtTokenRepository;
+import com.evalvis.blog.logging.UnauthorizedException;
 import com.evalvis.security.JwtKey;
-import com.evalvis.security.JwtToken;
+import com.evalvis.security.JwtRefreshToken;
+import com.evalvis.security.JwtShortLivedToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -26,20 +27,17 @@ public class UserController {
     private final PasswordResetRepository passwordResetRepository;
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
-    private final BlacklistedJwtTokenRepository blacklistedJwtTokenRepository;
     private final JwtKey key;
     private final Email emailSender;
 
     public @Autowired UserController(
             UserRepository userRepository, PasswordResetRepository passwordResetRepository, PasswordEncoder encoder,
-            AuthenticationManager authManager, BlacklistedJwtTokenRepository blacklistedJwtTokenRepository,
-            JwtKey key, Email emailSender
+            AuthenticationManager authManager, JwtKey key, Email emailSender
     ) {
         this.userRepository = userRepository;
         this.passwordResetRepository = passwordResetRepository;
         this.encoder = encoder;
         this.authManager = authManager;
-        this.blacklistedJwtTokenRepository = blacklistedJwtTokenRepository;
         this.key = key;
         this.emailSender = emailSender;
     }
@@ -52,23 +50,30 @@ public class UserController {
 
     @PostMapping("/login")
     void login(@RequestBody LoginUser loginUser, HttpServletResponse response) throws IOException {
-        JwtToken token = JwtToken.create(
-                loginUser.authenticate(authManager), key.value(), blacklistedJwtTokenRepository
-        );
-        ResponseCookie cookie = ResponseCookie.from("jwt", token.value())
+        JwtRefreshToken refreshToken = JwtRefreshToken.create(loginUser.authenticate(authManager), key.value());
+        ResponseCookie refreshCookie = ResponseCookie
+                .from("jwt", refreshToken.value())
                 .httpOnly(true)
                 .secure(true)
-                .maxAge(Duration.ofMinutes(10))
+                .maxAge(Duration.ofDays(14))
                 .path("/")
                 .build();
-        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
         response.getWriter().println(
                 new ObjectMapper()
                         .createObjectNode()
                         .put("username", loginUser.username(userRepository))
-                        .put("csrf", token.csrfToken())
+                        .put("jwtShortLived", JwtShortLivedToken.create(refreshToken, key.value()).value())
                         .toPrettyString()
         );
+    }
+
+    @PostMapping("/refresh")
+    ResponseEntity<String> refreshJwt(HttpServletRequest request) {
+        return JwtRefreshToken
+                .existing(request, key.value())
+                .map(refreshToken -> ResponseEntity.ok(JwtShortLivedToken.create(refreshToken, key.value()).value()))
+                .orElseThrow(() -> new UnauthorizedException("Refresh token is not valid."));
     }
 
     @PatchMapping("/change-password")
@@ -90,15 +95,7 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    void logout(HttpServletRequest request, HttpServletResponse response) {
-        JwtToken
-                .existing(request, key.value(), blacklistedJwtTokenRepository)
-                .ifPresentOrElse(
-                        blacklistedJwtTokenRepository::blacklistToken,
-                        () -> {
-                            throw new RuntimeException("Possible security issue. Logout is missing jwt token.");
-                        }
-                );
+    void logout(HttpServletResponse response) {
         ResponseCookie deleteCookie = ResponseCookie.from("jwt", "")
                 .httpOnly(true)
                 .secure(true)
