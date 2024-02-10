@@ -28,6 +28,11 @@ public class ITUserTestsConfig {
     }
 
     @Bean
+    public LoginStatusRepository fakeLoginStatusRepository() {
+        return new FakeLoginStatusRepository();
+    }
+
+    @Bean
     public Email fakeSmtpEmail() {
         return new FakeSmtpEmail();
     }

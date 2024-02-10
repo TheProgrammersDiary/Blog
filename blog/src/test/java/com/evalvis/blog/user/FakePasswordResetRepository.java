@@ -10,7 +10,7 @@ public class FakePasswordResetRepository implements PasswordResetRepository {
         return entries
                 .get(email)
                 .stream()
-                .max(Comparator.comparing(user -> user.dateCreated));
+                .max(Comparator.comparing(user -> user.getDateCreated()));
     }
 
     @Override
@@ -20,7 +20,7 @@ public class FakePasswordResetRepository implements PasswordResetRepository {
 
     @Override
     public <S extends PasswordResetEntry> S save(S entry) {
-        entries.merge(entry.email, new ArrayList<>(List.of(entry)), (oldValue, newValue) -> {
+        entries.merge(entry.getEmail(), new ArrayList<>(List.of(entry)), (oldValue, newValue) -> {
             oldValue.addAll(newValue);
             return oldValue;
         });

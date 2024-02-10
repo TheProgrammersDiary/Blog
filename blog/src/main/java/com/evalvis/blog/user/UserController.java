@@ -25,17 +25,20 @@ import java.time.Duration;
 public class UserController {
     private final UserRepository userRepository;
     private final PasswordResetRepository passwordResetRepository;
+    private final LoginStatusRepository loginStatusRepository;
     private final PasswordEncoder encoder;
     private final AuthenticationManager authManager;
     private final JwtKey key;
     private final Email emailSender;
 
     public @Autowired UserController(
-            UserRepository userRepository, PasswordResetRepository passwordResetRepository, PasswordEncoder encoder,
-            AuthenticationManager authManager, JwtKey key, Email emailSender
+            UserRepository userRepository, PasswordResetRepository passwordResetRepository,
+            LoginStatusRepository loginStatusRepository, PasswordEncoder encoder, AuthenticationManager authManager,
+            JwtKey key, Email emailSender
     ) {
         this.userRepository = userRepository;
         this.passwordResetRepository = passwordResetRepository;
+        this.loginStatusRepository = loginStatusRepository;
         this.encoder = encoder;
         this.authManager = authManager;
         this.key = key;
@@ -50,7 +53,8 @@ public class UserController {
 
     @PostMapping("/login")
     void login(@RequestBody LoginUser loginUser, HttpServletResponse response) throws IOException {
-        JwtRefreshToken refreshToken = JwtRefreshToken.create(loginUser.authenticate(authManager), key.value());
+        JwtRefreshToken refreshToken = JwtRefreshToken.create(loginUser.authentication(authManager), key.value());
+        loginUser.login(loginStatusRepository, emailSender, encoder, refreshToken.value(), refreshToken.expirationDate());
         ResponseCookie refreshCookie = ResponseCookie
                 .from("jwt", refreshToken.value())
                 .httpOnly(true)
@@ -72,7 +76,14 @@ public class UserController {
     ResponseEntity<String> refreshJwt(HttpServletRequest request) {
         return JwtRefreshToken
                 .existing(request, key.value())
-                .map(refreshToken -> ResponseEntity.ok(JwtShortLivedToken.create(refreshToken, key.value()).value()))
+                .map(refreshToken -> ResponseEntity.ok(
+                        new ObjectMapper()
+                            .createObjectNode()
+                            .put("username", refreshToken.email())
+                            .put("jwtShortLived", JwtShortLivedToken.create(refreshToken, key.value()).value())
+                            .toPrettyString()
+                        )
+                )
                 .orElseThrow(() -> new UnauthorizedException("Refresh token is not valid."));
     }
 
@@ -95,13 +106,22 @@ public class UserController {
     }
 
     @PostMapping("/logout")
-    void logout(HttpServletResponse response) {
-        ResponseCookie deleteCookie = ResponseCookie.from("jwt", "")
+    void logout(HttpServletRequest request, HttpServletResponse response) {
+        ResponseCookie deleteCookie = ResponseCookie
+                .from("jwt", "")
                 .httpOnly(true)
                 .secure(true)
                 .maxAge(0)
                 .path("/")
                 .build();
         response.addHeader(HttpHeaders.SET_COOKIE, deleteCookie.toString());
+        JwtRefreshToken refreshToken = JwtRefreshToken.existing(request, key.value()).get();
+        for (LoginStatusRepository.LoginStatusEntry loginStatus : loginStatusRepository
+                .findLogoutCandidates(refreshToken.email())) {
+            if (encoder.matches(refreshToken.value(), loginStatus.getToken())) {
+                loginStatusRepository.save(LoginStatusRepository.LoginStatusEntry.loggedOut(loginStatus));
+                break;
+            }
+        }
     }
 }

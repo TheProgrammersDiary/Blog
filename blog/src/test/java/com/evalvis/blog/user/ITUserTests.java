@@ -6,7 +6,11 @@ import com.evalvis.blog.FakeHttpServletRequest;
 import com.evalvis.blog.FakeHttpServletResponse;
 import com.evalvis.security.JwtKey;
 import com.evalvis.security.JwtRefreshToken;
+import com.evalvis.security.JwtShortLivedToken;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +46,7 @@ public class ITUserTests {
     private final UserController controller;
     private final UserRepository userRepository;
     private final PasswordResetRepository passwordResetRepository;
+    private final FakeLoginStatusRepository loginStatusRepository;
     private final OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler;
     private final JwtKey jwtKey;
     private final UserMother mother;
@@ -49,11 +54,13 @@ public class ITUserTests {
     @Autowired
     public ITUserTests(
             UserController controller, UserRepository userRepository, PasswordResetRepository passwordResetRepository,
+            FakeLoginStatusRepository loginStatusRepository,
             OAuth2AuthorizationSuccessHandler oAuth2AuthorizationSuccessHandler, JwtKey jwtKey
     ) {
         this.controller = controller;
         this.userRepository = userRepository;
         this.passwordResetRepository = passwordResetRepository;
+        this.loginStatusRepository = loginStatusRepository;
         this.oAuth2AuthorizationSuccessHandler = oAuth2AuthorizationSuccessHandler;
         this.jwtKey = jwtKey;
         this.mother = new UserMother(this.controller);
@@ -73,20 +80,22 @@ public class ITUserTests {
 
     @Test
     void logsIn() {
-        mother.loginNewUser();
+        mother.loginNewUser("ghi@gmail.com", "ghi", "password");
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
         assertTrue(authentication.isAuthenticated());
+        assertTrue(loginStatusRepository.notLoggedOutUserPresent("ghi@gmail.com"));
     }
 
     @Test
     void logsInViaOAuth2() throws IOException {
-        loginViaOauth2(UUID.randomUUID().toString());
+        loginViaOauth2("anotheremail@gmail.com");
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
         assertTrue(authentication.isAuthenticated());
+        assertTrue(loginStatusRepository.notLoggedOutUserPresent("anotheremail@gmail.com"));
     }
 
     @Test
@@ -107,27 +116,40 @@ public class ITUserTests {
                 new FakeAuthentication("user@gmail.com", null), jwtKey.value()
         );
 
-        String jwtShortLivedToken = assertDoesNotThrow(
-                () -> controller.refreshJwt(
+        JsonNode responseBody = assertDoesNotThrow(
+                () -> new ObjectMapper().readTree(
+                        controller.refreshJwt(
                         new FakeHttpServletRequest(
                                 new Cookie[]{
                                         new Cookie("jwt", refreshToken.value())
                                 }
                         )
                 ).getBody()
+                )
         );
 
-        assertNotNull(jwtShortLivedToken);
+        assertEquals("user@gmail.com", responseBody.get("username").asText());
+        assertNotNull(responseBody.get("jwtShortLived").toString());
     }
 
     @Test
     void logsOut() {
-        mother.loginNewUser();
+        mother.loginNewUser("anotherTester@gmail.com", "t", "password");
+        JwtRefreshToken refreshToken = JwtRefreshToken.create(
+                new FakeAuthentication("anotherTester@gmail.com", null), jwtKey.value()
+        );
+        HttpServletRequest request = new FakeHttpServletRequest(
+                Map.of(
+                        "Authorization", "Bearer " + JwtShortLivedToken.create(refreshToken, jwtKey.value()).value()
+                ),
+                new Cookie[]{new Cookie("jwt", refreshToken.value())}
+        );
         HttpServletResponse response = new FakeHttpServletResponse();
 
-        controller.logout(response);
+        controller.logout(request, response);
 
         assertTrue(response.getHeader("Set-Cookie").contains("jwt=; Path=/; Max-Age=0;"));
+        assertFalse(loginStatusRepository.notLoggedOutUserPresent("anotherTester@gmail.com"));
     }
 
     @Test

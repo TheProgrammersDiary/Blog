@@ -1,5 +1,6 @@
 package com.evalvis.blog.user;
 
+import com.evalvis.blog.Email;
 import com.evalvis.security.JwtKey;
 import com.evalvis.security.JwtRefreshToken;
 import com.evalvis.security.JwtShortLivedToken;
@@ -16,6 +17,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -33,6 +35,12 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
     private UserRepository userRepository;
     @Autowired
     private JwtKey key;
+    @Autowired
+    private LoginStatusRepository loginStatusRepository;
+    @Autowired
+    private Email emailSender;
+    @Autowired
+    private PasswordEncoder encoder;
     @Value("${blog.frontend-url}")
     private String frontendUrl;
 
@@ -54,13 +62,16 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         if (!userRepository.existsByEmail(email)) {
             userRepository.save(new UserRepository.UserEntry(username, email));
         }
-        UserDetails userDetails = new User(username, null);
+        UserDetails userDetails = new User(email, null);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities()
         );
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
         JwtRefreshToken refreshToken = JwtRefreshToken.create(authToken, key.value());
+        new LoginUser(
+                email, null
+        ).login(loginStatusRepository, emailSender, encoder, refreshToken.value(), refreshToken.expirationDate());
         ResponseCookie jwtRefreshCookie = ResponseCookie
                 .from("jwt", refreshToken.value())
                 .httpOnly(true)

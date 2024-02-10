@@ -25,9 +25,9 @@ public class PasswordReset {
                 .findFirstByEmailOrderByDateCreatedDesc(email)
                 .ifPresent(passwordChangeEntry -> {
                     if(
-                            !encoder.matches(resetToken, passwordChangeEntry.resetToken)
+                            !encoder.matches(resetToken, passwordChangeEntry.getResetToken())
                                     || new Date()
-                                    .after(new Date(passwordChangeEntry.dateCreated.getTime() + 60 * 60 * 1000)
+                                    .after(new Date(passwordChangeEntry.getDateCreated().getTime() + 60 * 60 * 1000)
                             )
                     ) {
                         throw new UnauthorizedException("Reset token is incorrect or has already expired.");
