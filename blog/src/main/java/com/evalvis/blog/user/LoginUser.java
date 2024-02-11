@@ -1,12 +1,14 @@
 package com.evalvis.blog.user;
 
 import com.evalvis.blog.Email;
+import com.evalvis.security.JwtRefreshToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import javax.crypto.SecretKey;
 import java.util.Date;
 
 public class LoginUser {
@@ -33,12 +35,10 @@ public class LoginUser {
         loginStatusRepo.save(new LoginStatusRepository.LoginStatusEntry(encoder.encode(token), email, expirationDate));
     }
 
-    public Authentication authentication(AuthenticationManager authManager, UserRepository userRepo) {
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password);
-        authToken.setDetails(userRepo.findUsernameByEmail(email));
-        Authentication authentication = authManager.authenticate(authToken);
+    public JwtRefreshToken refreshToken(AuthenticationManager authManager, UserRepository userRepo, SecretKey key) {
+        Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return authentication;
+        return JwtRefreshToken.create(userRepo.findUsernameByEmail(email).get(), authentication, key);
     }
 
     public String getEmail() {

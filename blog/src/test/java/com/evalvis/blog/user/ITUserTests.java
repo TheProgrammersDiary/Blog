@@ -113,7 +113,7 @@ public class ITUserTests {
     @Test
     void refreshesToken() {
         JwtRefreshToken refreshToken = JwtRefreshToken.create(
-                new FakeAuthentication("user@gmail.com", null, "user"), jwtKey.value()
+                "user", new FakeAuthentication("user@gmail.com", null), jwtKey.value()
         );
 
         JsonNode responseBody = assertDoesNotThrow(
@@ -136,7 +136,7 @@ public class ITUserTests {
     void logsOut() {
         mother.loginNewUser("anotherTester@gmail.com", "t", "password");
         JwtRefreshToken refreshToken = JwtRefreshToken.create(
-                new FakeAuthentication("anotherTester@gmail.com", null, "anotherTester"), jwtKey.value()
+                "anotherTester", new FakeAuthentication("anotherTester@gmail.com", null), jwtKey.value()
         );
         HttpServletRequest request = new FakeHttpServletRequest(
                 Map.of(
