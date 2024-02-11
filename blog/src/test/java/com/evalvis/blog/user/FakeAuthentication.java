@@ -8,9 +8,11 @@ import java.util.Collection;
 
 public final class FakeAuthentication implements Authentication {
     private final com.evalvis.security.User user;
+    private final String username;
 
-    public FakeAuthentication(String email, String password) {
+    public FakeAuthentication(String email, String password, String username) {
         this.user = new User(email, password);
+        this.username = username;
     }
 
     @Override
@@ -25,7 +27,7 @@ public final class FakeAuthentication implements Authentication {
 
     @Override
     public Object getDetails() {
-        throw new UnsupportedOperationException("Not implemented.");
+        return username;
     }
 
     @Override

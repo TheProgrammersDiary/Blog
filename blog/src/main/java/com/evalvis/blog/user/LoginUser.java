@@ -33,10 +33,10 @@ public class LoginUser {
         loginStatusRepo.save(new LoginStatusRepository.LoginStatusEntry(encoder.encode(token), email, expirationDate));
     }
 
-    public Authentication authentication(AuthenticationManager authManager) {
-        Authentication authentication = authManager.authenticate(
-                new UsernamePasswordAuthenticationToken(email, password)
-        );
+    public Authentication authentication(AuthenticationManager authManager, UserRepository userRepo) {
+        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(email, password);
+        authToken.setDetails(userRepo.findUsernameByEmail(email));
+        Authentication authentication = authManager.authenticate(authToken);
         SecurityContextHolder.getContext().setAuthentication(authentication);
         return authentication;
     }

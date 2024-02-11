@@ -16,6 +16,8 @@ import java.util.Optional;
 public interface UserRepository extends CrudRepository<UserRepository.UserEntry, String> {
     @Query("SELECT user.password FROM blog_user user WHERE email = :email")
     Optional<String> findPasswordByEmail(String email);
+    @Query("SELECT user.username FROM blog_user user WHERE email = :email")
+    Optional<String> findUsernameByEmail(String email);
     Optional<UserEntry> findByEmail(String email);
     boolean existsByEmail(String email);
     @Entity(name="blog_user")

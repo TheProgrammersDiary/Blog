@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
@@ -53,7 +54,9 @@ public class UserController {
 
     @PostMapping("/login")
     void login(@RequestBody LoginUser loginUser, HttpServletResponse response) throws IOException {
-        JwtRefreshToken refreshToken = JwtRefreshToken.create(loginUser.authentication(authManager), key.value());
+        JwtRefreshToken refreshToken = JwtRefreshToken.create(
+                loginUser.authentication(authManager, userRepository), key.value()
+        );
         loginUser.login(loginStatusRepository, emailSender, encoder, refreshToken.value(), refreshToken.expirationDate());
         ResponseCookie refreshCookie = ResponseCookie
                 .from("jwt", refreshToken.value())
@@ -79,7 +82,7 @@ public class UserController {
                 .map(refreshToken -> ResponseEntity.ok(
                         new ObjectMapper()
                             .createObjectNode()
-                            .put("username", refreshToken.email())
+                            .put("username", refreshToken.username())
                             .put("jwtShortLived", JwtShortLivedToken.create(refreshToken, key.value()).value())
                             .toPrettyString()
                         )
