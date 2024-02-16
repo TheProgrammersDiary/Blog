@@ -27,7 +27,7 @@ spring:
         debug: false
   data:
     mongodb:
-      uri: mongodb://mongodb:27017
+      uri: mongodb://localhost:27017
       database: blog
   datasource:
     url: jdbc:postgresql://localhost:5432/users
