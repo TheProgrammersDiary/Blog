@@ -1,6 +1,6 @@
 blog:
   frontend-url: https://localhost:3000
-  http-masking-turned-on: false
+  http-masking-turned-on: true
 server:
   ssl:
     key-store: classpath:blog.p12
@@ -30,9 +30,9 @@ spring:
       uri: mongodb://mongodb:27017
       database: blog
   datasource:
-    url: jdbc:postgresql://postgres_blog:5432/users
+    url: jdbc:postgresql://localhost:5432/users
     username: blog
-    password: admin
+    password: ${postgres_blog_password}
     driver-class-name: org.postgresql.Driver
   jpa:
     properties:
