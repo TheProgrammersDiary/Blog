@@ -38,6 +38,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: false
   liquibase:
     change-log: classpath:/liquibase/postgresql/changelog/liquibase.changelog_master.yaml
   security:
@@ -51,7 +52,7 @@ spring:
 management:
   endpoint:
     prometheus:
-      enabled: true
+      enabled: false
   endpoints:
     web:
       exposure:
@@ -59,4 +60,4 @@ management:
   prometheus:
     metrics:
       export:
-        enabled: true
+        enabled: false
