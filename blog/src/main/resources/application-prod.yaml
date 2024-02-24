@@ -52,7 +52,7 @@ spring:
 management:
   endpoint:
     prometheus:
-      enabled: false
+      enabled: true
   endpoints:
     web:
       exposure:
@@ -60,4 +60,4 @@ management:
   prometheus:
     metrics:
       export:
-        enabled: false
+        enabled: true
