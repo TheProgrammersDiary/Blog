@@ -17,7 +17,7 @@ public class PasswordChange {
             throw new UnauthorizedException("Can't change password when using OAuth!");
         }
         if(!encoder.matches(currentPassword, repository.findPasswordByEmail(email).get())) {
-            throw new UnauthorizedException("Old and new passwords do not match!");
+            throw new UnauthorizedException("Incorrect current password!");
         }
         repository.save(
                 UserRepository.UserEntry.withChangedPassword(
