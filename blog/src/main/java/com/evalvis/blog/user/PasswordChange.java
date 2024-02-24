@@ -1,5 +1,6 @@
 package com.evalvis.blog.user;
 
+import com.evalvis.blog.logging.UnauthorizedException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class PasswordChange {
@@ -13,10 +14,10 @@ public class PasswordChange {
 
     public void changePassword(UserRepository repository, String email, PasswordEncoder encoder) {
         if(repository.findPasswordByEmail(email).isEmpty()) {
-            throw new RuntimeException("Can't change password when using OAuth!");
+            throw new UnauthorizedException("Can't change password when using OAuth!");
         }
         if(!encoder.matches(currentPassword, repository.findPasswordByEmail(email).get())) {
-            throw new RuntimeException("Old and new passwords do not match!");
+            throw new UnauthorizedException("Old and new passwords do not match!");
         }
         repository.save(
                 UserRepository.UserEntry.withChangedPassword(
