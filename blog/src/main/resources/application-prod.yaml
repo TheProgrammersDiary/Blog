@@ -29,6 +29,8 @@ spring:
     mongodb:
       uri: ${mongo_url}
       database: blog
+      username: blog
+      password: ${mongodb_password}
   datasource:
     url: jdbc:postgresql://${postgres_blog_url}/users
     username: blog
