@@ -38,7 +38,7 @@ public class LoginUser {
     public JwtRefreshToken refreshToken(AuthenticationManager authManager, UserRepository userRepo, SecretKey key) {
         Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return JwtRefreshToken.create(userRepo.findUsernameByEmail(email).get(), authentication, key);
+        return JwtRefreshToken.create(userRepo.findUsernameByEmail(email).get(), authentication, key, true);
     }
 
     public String getEmail() {

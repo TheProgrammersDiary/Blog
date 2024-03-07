@@ -68,7 +68,7 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         );
         authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
         SecurityContextHolder.getContext().setAuthentication(authToken);
-        JwtRefreshToken refreshToken = JwtRefreshToken.create(username, authToken, key.value());
+        JwtRefreshToken refreshToken = JwtRefreshToken.create(username, authToken, key.value(), false);
         new LoginUser(
                 email, null
         ).login(loginStatusRepository, emailSender, encoder, refreshToken.value(), refreshToken.expirationDate());

@@ -80,6 +80,7 @@ public class UserController {
                         new ObjectMapper()
                             .createObjectNode()
                             .put("username", refreshToken.username())
+                            .put("isLoginLocal", refreshToken.isLoginLocal())
                             .put("jwtShortLived", JwtShortLivedToken.create(refreshToken, key.value()).value())
                             .toPrettyString()
                         )
