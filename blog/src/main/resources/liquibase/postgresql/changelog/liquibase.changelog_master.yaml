@@ -2,8 +2,6 @@ databaseChangeLog:
   - include:
       file: classpath:/liquibase/postgresql/changelog/001_user.sql
   - include:
-      file: classpath:/liquibase/postgresql/changelog/002_user.sql
-  - include:
       file: classpath:/liquibase/postgresql/changelog/001_password_reset.sql
   - include:
       file: classpath:/liquibase/postgresql/changelog/001_login_status.sql
