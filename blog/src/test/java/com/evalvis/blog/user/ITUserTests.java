@@ -4,6 +4,7 @@ import au.com.origin.snapshots.Expect;
 import au.com.origin.snapshots.junit5.SnapshotExtension;
 import com.evalvis.blog.FakeHttpServletRequest;
 import com.evalvis.blog.FakeHttpServletResponse;
+import com.evalvis.blog.logging.BadRequestException;
 import com.evalvis.security.JwtKey;
 import com.evalvis.security.JwtRefreshToken;
 import com.evalvis.security.JwtShortLivedToken;
@@ -16,6 +17,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -35,6 +38,7 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -73,9 +77,16 @@ public class ITUserTests {
 
     @Test
     void signsUp() {
+        mother.signUp("tester10@gmail.com", "tester", "test");
+
+        assertTrue(userRepository.findByEmail("tester10@gmail.com").isPresent());
+    }
+
+    @Test
+    void doesNotOverwriteExistingUserOnSignUp() {
         mother.signUp("tester@gmail.com", "tester", "test");
 
-        assertTrue(userRepository.findByEmail("tester@gmail.com").isPresent());
+        assertThrows(BadRequestException.class, () -> mother.signUp("tester@gmail.com", "tester", "test"));
     }
 
     @Test
@@ -96,6 +107,13 @@ public class ITUserTests {
         assertNotNull(authentication);
         assertTrue(authentication.isAuthenticated());
         assertTrue(loginStatusRepository.notLoggedOutUserPresent("anotheremail@gmail.com"));
+    }
+
+    @Test
+    void doesNotOverwriteExistingUserOnloginViaOAuth2() {
+        mother.signUp("randomemail@gmail.com", "tester", "test");
+
+        assertThrows(BadRequestException.class, () -> loginViaOauth2("randomemail@gmail.com"));
     }
 
     @Test
@@ -154,12 +172,12 @@ public class ITUserTests {
 
     @Test
     void changesPassword() {
-        mother.loginNewUser("abc@gmail.com", "abc", "currentPassword");
+        mother.loginNewUser("def@gmail.com", "def", "currentPassword");
 
         controller.changePassword(new PasswordChange("currentPassword", "newPassword"));
 
         logout();
-        mother.login("abc@gmail.com", "newPassword");
+        mother.login("def@gmail.com", "newPassword");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         assertNotNull(authentication);
         assertTrue(authentication.isAuthenticated());
@@ -212,20 +230,19 @@ public class ITUserTests {
     }
 
     @ParameterizedTest
-    @NullSource
-    @ValueSource(strings = {"", "wrongToken"})
-    void failsToResetPasswordIfTokenIsInvalid(String wrongToken) throws IOException {
-        mother.loginNewUser("testeremail@gmail.com", "tester", "forgottenPassword");
+    @MethodSource("failsToResetPasswordIfTokenIsInvalidParameters")
+    void failsToResetPasswordIfTokenIsInvalid(String wrongToken, String email) {
+        mother.loginNewUser(email, "tester", "forgottenPassword");
         passwordResetRepository.save(
                 new PasswordResetRepository.PasswordResetEntry(
-                        new BCryptPasswordEncoder().encode("token"), "testeremail@gmail.com"
+                        new BCryptPasswordEncoder().encode("token"), email
                 )
         );
 
         assertThrows(
                 RuntimeException.class,
                 () -> controller.resetPassword(
-                        new PasswordReset("testeremail@gmail.com", wrongToken, "newPassword")
+                        new PasswordReset(email, wrongToken, "newPassword")
                 )
         );
         SecurityContextHolder.getContext().setAuthentication(null);
@@ -233,11 +250,19 @@ public class ITUserTests {
         assertThrows(
                 BadCredentialsException.class,
                 () -> controller.login(
-                        new LoginUser("testeremail@gmail.com", "newPassword"),
+                        new LoginUser(email, "newPassword"),
                         new FakeHttpServletResponse()
                 )
         );
         assertNull(SecurityContextHolder.getContext().getAuthentication());
+    }
+
+    public static Stream<Arguments> failsToResetPasswordIfTokenIsInvalidParameters() {
+        return Stream.of(
+                Arguments.arguments(null, "testeremail@gmail.com"),
+                Arguments.arguments("", "testeremail1@gmail.com"),
+                Arguments.arguments("wrongToken", "testeremail2@gmail.com")
+        );
     }
 
     @Test

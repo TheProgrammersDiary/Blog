@@ -1,6 +1,7 @@
 package com.evalvis.blog.user;
 
 import com.evalvis.blog.Email;
+import com.evalvis.blog.logging.BadRequestException;
 import com.evalvis.security.JwtKey;
 import com.evalvis.security.JwtRefreshToken;
 import com.evalvis.security.JwtShortLivedToken;
@@ -61,6 +62,9 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         }
         if (!userRepository.existsByEmail(email)) {
             userRepository.save(new UserRepository.UserEntry(username, email));
+        }
+        else if(userRepository.findPasswordByEmail(email).isPresent()) {
+            throw new BadRequestException("User with email: " + email + " has signed up via different method.");
         }
         UserDetails userDetails = new User(email, null);
         UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

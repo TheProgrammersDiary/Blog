@@ -1,5 +1,6 @@
 package com.evalvis.blog.user;
 
+import com.evalvis.blog.logging.BadRequestException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 public class SignUpUser {
@@ -14,6 +15,9 @@ public class SignUpUser {
     }
 
     public void save(UserRepository userRepository, PasswordEncoder encoder) {
+        if(userRepository.findByEmail(email).isPresent()) {
+            throw new BadRequestException("User with email: " + email + " already exists.");
+        }
         userRepository.save(new UserRepository.UserEntry(email, username, encoder.encode(password)));
     }
 
