@@ -29,7 +29,7 @@ public class SignUpUser {
         }
         String verificationToken = secureGuid().toString();
         String verificationPath = verificationEndpoint
-                + "?verification-email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
+                + "?email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
                 + "&verification-token=" + URLEncoder.encode(verificationToken, StandardCharsets.UTF_8);
         emailSender.sendEmail(
                 email,
