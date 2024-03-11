@@ -35,6 +35,8 @@ public class UserController {
     private final Email emailSender;
     @Value("${blog.blog-url}")
     private String blogUrl;
+    @Value("${blog.frontend-url}")
+    private String frontendUrl;
 
     public @Autowired UserController(
             UserRepository userRepository, PasswordResetRepository passwordResetRepository,
@@ -57,9 +59,11 @@ public class UserController {
     }
 
     @GetMapping("/verify-email") // TODO: Consider if changing this to Post request is necessary (would probably need to modify FE).
-    public ResponseEntity<String> verifyEmail(
-            @RequestParam(name = "email") String email, @RequestParam(name = "verification-token") String verificationToken
-    ) {
+    public void verifyEmail(
+            @RequestParam(name = "email") String email,
+            @RequestParam(name = "verification-token") String verificationToken,
+            HttpServletResponse response
+    ) throws IOException {
         Optional<UserRepository.UserEntry> user = userRepository.findByEmail(email);
         if(user.isEmpty() || !verificationToken.equals(user.get().getVerificationToken())) {
             throw new BadRequestException(
@@ -68,7 +72,7 @@ public class UserController {
             );
         }
         userRepository.save(UserRepository.UserEntry.withVerifiedToken(user.get()));
-        return ResponseEntity.ok().build();
+        response.sendRedirect(frontendUrl);
     }
 
     @PostMapping("/login")

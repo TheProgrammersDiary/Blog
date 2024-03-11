@@ -32,6 +32,7 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
         @Column(nullable = false)
         private String username;
         private String password;
+        @Column(name = "verification_token")
         private String verificationToken;
 
         public static UserEntry withChangedPassword(String newPassword, UserEntry userEntry) {
