@@ -4,6 +4,8 @@ import com.evalvis.blog.Email;
 import com.evalvis.blog.logging.BadRequestException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.UUID;
@@ -26,8 +28,9 @@ public class SignUpUser {
             throw new BadRequestException("User with email: " + email + " already exists.");
         }
         String verificationToken = secureGuid().toString();
-        String verificationPath = verificationEndpoint + "?verification-email=" + email
-                + "&verification-token=" + verificationToken;
+        String verificationPath = verificationEndpoint
+                + "?verification-email=" + URLEncoder.encode(email, StandardCharsets.UTF_8)
+                + "&verification-token=" + URLEncoder.encode(verificationToken, StandardCharsets.UTF_8);
         emailSender.sendEmail(
                 email,
                 "Email verification",
