@@ -64,7 +64,7 @@ public class SecurityConfig {
                                 .requestMatchers(HttpMethod.OPTIONS)
                                 .permitAll()
                                 .requestMatchers(
-                                        "/users/signup", "/users/login",
+                                        "/users/signup", "/users/login", "/users/verify-email",
                                         "/actuator/prometheus",
                                         "/comments/list-comments/{postId}", "/comments/create",
                                         "/users/request-password-reset", "/users/reset-password", "/users/refresh"

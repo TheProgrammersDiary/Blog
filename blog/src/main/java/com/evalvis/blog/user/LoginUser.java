@@ -1,6 +1,7 @@
 package com.evalvis.blog.user;
 
 import com.evalvis.blog.Email;
+import com.evalvis.blog.logging.UnauthorizedException;
 import com.evalvis.security.JwtRefreshToken;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -21,9 +22,12 @@ public class LoginUser {
     }
 
     public void login(
-            LoginStatusRepository loginStatusRepo, Email emailSender, PasswordEncoder encoder,
-            String token, Date expirationDate
+            LoginStatusRepository loginStatusRepo, UserRepository userRepo, Email emailSender,
+            PasswordEncoder encoder, String token, Date expirationDate
     ) {
+        if(userRepo.verificationTokenExists(email)) {
+            throw new UnauthorizedException("Please verify email: " + email + " to login.");
+        }
         if(loginStatusRepo.notLoggedOutUserPresent(email)) {
             emailSender.sendEmail(
                     email,

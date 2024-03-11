@@ -5,6 +5,7 @@ import au.com.origin.snapshots.junit5.SnapshotExtension;
 import com.evalvis.blog.FakeHttpServletRequest;
 import com.evalvis.blog.FakeHttpServletResponse;
 import com.evalvis.blog.logging.BadRequestException;
+import com.evalvis.blog.logging.UnauthorizedException;
 import com.evalvis.security.JwtKey;
 import com.evalvis.security.JwtRefreshToken;
 import com.evalvis.security.JwtShortLivedToken;
@@ -67,7 +68,7 @@ public class ITUserTests {
         this.loginStatusRepository = loginStatusRepository;
         this.oAuth2AuthorizationSuccessHandler = oAuth2AuthorizationSuccessHandler;
         this.jwtKey = jwtKey;
-        this.mother = new UserMother(this.controller);
+        this.mother = new UserMother(this.controller, userRepository);
     }
 
     @AfterEach
@@ -97,6 +98,13 @@ public class ITUserTests {
         assertNotNull(authentication);
         assertTrue(authentication.isAuthenticated());
         assertTrue(loginStatusRepository.notLoggedOutUserPresent("ghi@gmail.com"));
+    }
+
+    @Test
+    void failsToLoginWithUnverifiedEmail() {
+        mother.signUp("tester100@gmail.com", "tester", "test");
+
+        assertThrows(UnauthorizedException.class, () -> mother.login("tester100@gmail.com", "test"));
     }
 
     @Test

@@ -75,7 +75,10 @@ public class OAuth2AuthorizationSuccessHandler implements AuthenticationSuccessH
         JwtRefreshToken refreshToken = JwtRefreshToken.create(username, authToken, key.value(), false);
         new LoginUser(
                 email, null
-        ).login(loginStatusRepository, emailSender, encoder, refreshToken.value(), refreshToken.expirationDate());
+        ).login(
+                loginStatusRepository, userRepository, emailSender, encoder, refreshToken.value(),
+                refreshToken.expirationDate()
+        );
         ResponseCookie jwtRefreshCookie = ResponseCookie
                 .from("jwt", refreshToken.value())
                 .httpOnly(true)

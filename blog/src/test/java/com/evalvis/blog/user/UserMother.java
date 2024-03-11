@@ -6,13 +6,16 @@ import java.io.IOException;
 
 public class UserMother {
     private final UserController controller;
+    private final UserRepository repo;
 
-    public UserMother(UserController controller) {
+    public UserMother(UserController controller, UserRepository repo) {
         this.controller = controller;
+        this.repo = repo;
     }
 
     public FakeHttpServletResponse loginNewUser(String email, String username, String password) {
         signUp(email, username, password);
+        repo.save(UserRepository.UserEntry.withVerifiedToken(repo.findByEmail(email).get()));
         return login(email, password);
     }
 

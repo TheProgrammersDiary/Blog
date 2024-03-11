@@ -20,6 +20,8 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
     Optional<String> findUsernameByEmail(String email);
     Optional<UserEntry> findByEmail(String email);
     boolean existsByEmail(String email);
+    @Query("SELECT CASE WHEN user.verification_token IS NULL THEN false ELSE true END FROM blog_user user WHERE email = :email")
+    boolean verificationTokenExists(String email);
     @Entity(name="blog_user")
     @JsonPropertyOrder(alphabetic=true)
     class UserEntry {
@@ -30,20 +32,27 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
         @Column(nullable = false)
         private String username;
         private String password;
+        private String verificationToken;
 
         public static UserEntry withChangedPassword(String newPassword, UserEntry userEntry) {
             userEntry.password = newPassword;
             return userEntry;
         }
 
-        public UserEntry(String username, String email) {
-            this(email, username, null);
+        public static UserEntry withVerifiedToken(UserEntry userEntry) {
+            userEntry.verificationToken = null;
+            return userEntry;
         }
 
-        public UserEntry(String email, String username, String password) {
+        public UserEntry(String username, String email) {
+            this(email, username, null, null);
+        }
+
+        public UserEntry(String email, String username, String password, String verificationToken) {
             this.email = email;
             this.username = username;
             this.password = password;
+            this.verificationToken = verificationToken;
         }
 
         public UserEntry() {
@@ -58,9 +67,12 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
             return username;
         }
 
-
         public String getPassword() {
             return password;
+        }
+
+        public String getVerificationToken() {
+            return verificationToken;
         }
 
         @Override

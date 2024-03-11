@@ -1,4 +1,5 @@
 blog:
+  blog-url: https://localhost:8080
   frontend-url: https://localhost:3000
   http-masking-turned-on: false
 server:

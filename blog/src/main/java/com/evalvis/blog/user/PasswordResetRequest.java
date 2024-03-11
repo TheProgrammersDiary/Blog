@@ -22,13 +22,13 @@ public class PasswordResetRequest {
             if(user.getPassword() == null) {
                 return;
             }
-            String secureGuid = secureGuid().toString();
-            passwordResetRepository.save(new PasswordResetRepository.PasswordResetEntry(encoder.encode(secureGuid), email));
+            String resetToken = secureGuid().toString();
+            passwordResetRepository.save(new PasswordResetRepository.PasswordResetEntry(encoder.encode(resetToken), email));
             emailSender.sendEmail(
                     email,
                     "Password reset request",
                     "Hi. You or somebody else has requested a password reset on your account. If it was not you"
-                            + " no action is required. If it was you, please copy this token: " + secureGuid +
+                            + " no action is required. If it was you, please copy this token: " + resetToken +
                             " and paste it in the same page you requested your password."
             );
         });

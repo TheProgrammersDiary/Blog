@@ -1,4 +1,5 @@
 blog:
+  blog-url: ${blog_url}
   frontend-url: ${frontend_url}
   http-masking-turned-on: true
 server:

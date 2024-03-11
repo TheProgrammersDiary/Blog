@@ -1,6 +1,7 @@
 package com.evalvis.blog.user;
 
 import com.evalvis.blog.Email;
+import com.evalvis.blog.logging.BadRequestException;
 import com.evalvis.blog.logging.UnauthorizedException;
 import com.evalvis.security.JwtKey;
 import com.evalvis.security.JwtRefreshToken;
@@ -9,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.time.Duration;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("users")
@@ -30,6 +33,8 @@ public class UserController {
     private final AuthenticationManager authManager;
     private final JwtKey key;
     private final Email emailSender;
+    @Value("${blog.blog-url}")
+    private String blogUrl;
 
     public @Autowired UserController(
             UserRepository userRepository, PasswordResetRepository passwordResetRepository,
@@ -47,14 +52,32 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signUp(@RequestBody SignUpUser signUpUser) {
-        signUpUser.save(userRepository, encoder);
+        signUpUser.save(userRepository, encoder, emailSender, blogUrl + "/verify-email");
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/verify-email") // TODO: Consider if changing this to Post request is necessary (would probably need to modify FE).
+    public ResponseEntity<String> verifyEmail(
+            @RequestParam(name = "email") String email, @RequestParam(name = "verification-token") String verificationToken
+    ) {
+        Optional<UserRepository.UserEntry> user = userRepository.findByEmail(email);
+        if(user.isEmpty() || !verificationToken.equals(user.get().getVerificationToken())) {
+            throw new BadRequestException(
+                    "Email " + email + " does not exists or verification token " + verificationToken + " does not match." +
+                            " Or user with this email is already verified."
+            );
+        }
+        userRepository.save(UserRepository.UserEntry.withVerifiedToken(user.get()));
         return ResponseEntity.ok().build();
     }
 
     @PostMapping("/login")
     void login(@RequestBody LoginUser loginUser, HttpServletResponse response) throws IOException {
         JwtRefreshToken refreshToken = loginUser.refreshToken(authManager, userRepository, key.value());
-        loginUser.login(loginStatusRepository, emailSender, encoder, refreshToken.value(), refreshToken.expirationDate());
+        loginUser.login(
+                loginStatusRepository, userRepository, emailSender, encoder, refreshToken.value(),
+                refreshToken.expirationDate()
+        );
         ResponseCookie refreshCookie = ResponseCookie
                 .from("jwt", refreshToken.value())
                 .httpOnly(true)
