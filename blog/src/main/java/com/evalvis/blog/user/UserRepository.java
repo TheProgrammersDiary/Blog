@@ -20,8 +20,9 @@ public interface UserRepository extends CrudRepository<UserRepository.UserEntry,
     Optional<String> findUsernameByEmail(String email);
     Optional<UserEntry> findByEmail(String email);
     boolean existsByEmail(String email);
-    @Query("SELECT user.verification_token FROM blog_user user WHERE email = :email")
+    @Query("SELECT user.verificationToken FROM blog_user user WHERE email = :email")
     Optional<String> findVerificationTokenByEmail(String email);
+
     @Entity(name="blog_user")
     @JsonPropertyOrder(alphabetic=true)
     class UserEntry {
