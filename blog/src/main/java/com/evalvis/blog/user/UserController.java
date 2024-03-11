@@ -54,7 +54,7 @@ public class UserController {
 
     @PostMapping("/signup")
     public ResponseEntity<String> signUp(@RequestBody SignUpUser signUpUser) {
-        signUpUser.save(userRepository, encoder, emailSender, blogUrl + "/verify-email");
+        signUpUser.save(userRepository, encoder, emailSender, blogUrl + "/users/verify-email");
         return ResponseEntity.ok().build();
     }
 
