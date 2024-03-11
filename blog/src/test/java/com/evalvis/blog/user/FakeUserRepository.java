@@ -38,10 +38,10 @@ public class FakeUserRepository implements UserRepository {
     }
 
     @Override
-    public boolean verificationTokenExists(String email) {
-        return entries.values().stream().filter(
-                user -> user.getEmail().equals(email)
-        ).findFirst().get().getVerificationToken() != null;
+    public Optional<String> findVerificationTokenByEmail(String email) {
+        return Optional.ofNullable(
+                entries.values().stream().filter(user -> user.getEmail().equals(email)).findFirst().get().getVerificationToken()
+        );
     }
 
     @Override

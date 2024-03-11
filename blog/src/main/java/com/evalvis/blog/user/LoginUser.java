@@ -25,7 +25,7 @@ public class LoginUser {
             LoginStatusRepository loginStatusRepo, UserRepository userRepo, Email emailSender,
             PasswordEncoder encoder, String token, Date expirationDate
     ) {
-        if(userRepo.verificationTokenExists(email)) {
+        if(userRepo.findVerificationTokenByEmail(email).isPresent()) {
             throw new UnauthorizedException("Please verify email: " + email + " to login.");
         }
         if(loginStatusRepo.notLoggedOutUserPresent(email)) {
