@@ -101,6 +101,16 @@ public class ITUserTests {
     }
 
     @Test
+    void verifiesEmail() {
+        mother.signUp("newuser@gmail.com", "ghi", "password");
+        String verificationToken = userRepository.findByEmail("newuser@gmail.com").get().getVerificationToken();
+
+        controller.verifyEmail("newuser@gmail.com", verificationToken);
+
+        assertDoesNotThrow(() -> mother.login("newuser@gmail.com", "password"));
+    }
+
+    @Test
     void failsToLoginWithUnverifiedEmail() {
         mother.signUp("tester100@gmail.com", "tester", "test");
 
