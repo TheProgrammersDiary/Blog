@@ -101,11 +101,11 @@ public class ITUserTests {
     }
 
     @Test
-    void verifiesEmail() {
+    void verifiesEmail() throws IOException {
         mother.signUp("newuser@gmail.com", "ghi", "password");
         String verificationToken = userRepository.findByEmail("newuser@gmail.com").get().getVerificationToken();
 
-        controller.verifyEmail("newuser@gmail.com", verificationToken);
+        controller.verifyEmail("newuser@gmail.com", verificationToken, new FakeHttpServletResponse());
 
         assertDoesNotThrow(() -> mother.login("newuser@gmail.com", "password"));
     }
